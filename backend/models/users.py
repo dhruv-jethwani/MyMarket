@@ -11,6 +11,7 @@ class Address(EmbeddedDocument):
 
 class User(db.Document):
 	meta = {'collection': 'users'}
+	fullname = StringField(required=True)
 	username = StringField(unique=True, required=True)
 	email = EmailField(unique=True, required=True)
 	password = StringField(required=True)
@@ -21,8 +22,9 @@ class User(db.Document):
 def getallusers():
 	return User.objects.all()
 
-def create_user(username, email, hashed_password, role, address):
+def create_user(fullname, username, email, hashed_password, role, address):
 	user = User(
+        fullname=fullname,
         username=username,
         email=email,
         password=hashed_password,

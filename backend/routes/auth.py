@@ -6,10 +6,10 @@ from werkzeug.security import generate_password_hash
 @auth_bp.route('/register', methods=['POST'])
 def register():
 	data = request.get_json()
-	username, email, password, role, address = data.get("username"), data.get("email"), data.get("password"), data.get("role"), data.get("address")
+	fullname, username, email, password, role, address = data.get("fullname"), data.get("username"), data.get("email"), data.get("password"), data.get("role"), data.get("address")
 	hashed_password = generate_password_hash(password)
 
-	create_user(username, email, hashed_password, role, address)
+	create_user(fullname, username, email, hashed_password, role, address)
 
 	return jsonify({"message": "User created successfully"}), 201
 
