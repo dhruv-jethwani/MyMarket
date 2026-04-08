@@ -1,2 +1,4 @@
 frontend/node_modules
 backend/.env
+mobile/.expo
+mobile/node_modules
