@@ -1,9 +1,12 @@
 from . import db
-from mongoengine import StringField, EmailField, IntField, DateTimeField, EnumField, EmbeddedDocument, EmbeddedDocumentField, QuerySet
-from enum import Enum
-from datetime import datetime
+from mongoengine import StringField, EmailField, IntField, DateTimeField, EmbeddedDocument, EmbeddedDocumentField
+from datetime import datetime, timedelta, timezone
 from werkzeug.security import check_password_hash
     
+IST = timezone(timedelta(hours=5, minutes=30))
+def get_ist_now():
+    return datetime.now(IST)
+
 class Address(EmbeddedDocument):
     street = StringField()
     city = StringField()
@@ -15,9 +18,9 @@ class User(db.Document):
 	username = StringField(unique=True, required=True)
 	email = EmailField(unique=True, required=True)
 	password = StringField(required=True)
-	role = StringField(choices=['admin', 'manager', 'customer'], default='customer')
-	address = EmbeddedDocumentField(Address, required=True)
-	createdat = DateTimeField(default=datetime.now)
+	role = StringField(choices=['admin', 'seller', 'customer'], default='customer')
+	address = EmbeddedDocumentField(Address)
+	createdat = DateTimeField(default=get_ist_now)
      
 def getallusers():
 	return User.objects.all()
@@ -33,8 +36,8 @@ def create_user(fullname, username, email, hashed_password, role, address):
     )
 	return user.save()
 
-def get_user_by_username(username):
-	return User.objects(username=username).first()
+def get_user_by_username(uname):
+	return User.objects(username=uname).first()
 
 def verify_password(user, password):
 	if not user:

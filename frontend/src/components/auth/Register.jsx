@@ -151,7 +151,7 @@ function Register() {
                             <label className={labelStyle}>Account Role</label>
                             <select {...register("role")} className={inputStyle}>
                                 <option value="customer">Customer</option>
-                                <option value="manager">Manager</option>
+                                <option value="seller">Seller</option>
                             </select>
                         </div>
 

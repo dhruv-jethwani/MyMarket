@@ -1,8 +1,8 @@
 import React from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
-import Home from './components/Home'
-import Login from './components/Login'
-import Register from './components/Register'
+import Home from './components/common/Home'
+import Login from './components/auth/Login'
+import Register from './components/auth/Register'
 
 function App() {
   return (

@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
 from models import db
-from routes import auth_bp
+from routes import auth_bp, shop_bp, cart_bp
 import os
 
 load_dotenv()
@@ -16,6 +16,8 @@ app.config['MONGODB_SETTINGS'] = {
 db.init_app(app)
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
+app.register_blueprint(shop_bp, url_prefix='/shop')
+app.register_blueprint(cart_bp, url_prefix='/cart')
 
 @app.route('/')
 def home():
