@@ -40,3 +40,6 @@ def add_product(name, description, seller, price, category, stock_quantity, imag
 
 def get_product_by_seller_id(sellerid):
 	return Product.objects(seller=sellerid) 
+
+def get_product(product_id):
+	return Product.objects.get(pk=product_id)

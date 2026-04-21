@@ -2,6 +2,10 @@ from . import auth_bp
 from flask import request, jsonify
 from models.users import create_user, get_user_by_username, verify_password
 from werkzeug.security import generate_password_hash
+import jwt
+import time
+import dotenv
+import os
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -15,13 +19,27 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-	data = request.get_json()
-	username, password = data.get("username"), data.get("password")
-	user = get_user_by_username(username)
-	if user and verify_password(user, password):
-		return jsonify({
+    data = request.get_json()
+    username, password = data.get("username"), data.get("password")
+    
+    # 1. Fetch the user (might be None if they don't exist)
+    user = get_user_by_username(username)
+    
+    # 2. Verify the user exists AND the password matches FIRST
+    if user and verify_password(user, password):
+        
+        # 3. Now it is safe to grab the ID and build the token
+        payload = {
+            'user': user, # Use str(user.id) so PyJWT can encode it properly
+            "exp": int(time.time()) + 3600
+        }
+        token = jwt.encode(payload, os.getenv('SECRET_KEY'), algorithm='HS256')
+        
+        return jsonify({
             "message": "Login successful",
-            "email": user.email # Added for React localStorage
+            "token": token
         }), 200
-	return jsonify({"error": "Invalid credentials"}), 401
+        
+    # 4. If user is None or password is wrong, safely drop down here
+    return jsonify({"error": "Invalid credentials"}), 401
 
