@@ -19,6 +19,7 @@ import ManageInventory from './components/seller/ManageInventory'
 import ManageOrders from './components/seller/ManageOrders'
 import AllOrders from './components/admin/AllOrders'
 import UserControl from './components/admin/UserControl'
+import ProductDetail from './components/common/ProductDetail'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
       <Route path='/' element={<Home />} />
       <Route path='/login' element={<Login />} />
       <Route path='/register' element={<Register />} />
+	  <Route path='/profile' element={<Profile />} />
 
       {/* CUSTOMER ROUTES (Requires login + 'customer' role) */}
       <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
@@ -38,13 +40,15 @@ function App() {
       </Route>
 
       {/* SELLER ROUTES (Requires login + 'seller' role) */}
-      <Route element={<ProtectedRoute allowedRoles={['seller']} />}>
-        <Route element={<SellerLayout />}>
-          <Route path='/add_product' element={<AddProduct />} />
-          <Route path='/inventory' element={<ManageInventory />} />
-          <Route path='/manage_orders' element={<ManageOrders />} />
-        </Route>
-      </Route>
+	  <Route element={<ProtectedRoute allowedRoles={['seller']} />}>
+		<Route element={<SellerLayout />}>
+			<Route path='/add_product' element={<AddProduct />} />
+			<Route path='/inventory' element={<ManageInventory />} />
+			<Route path='/manage_orders' element={<ManageOrders />} />
+			{/* NEW: Seller can view product details */}
+			<Route path='/product/:id' element={<ProductDetail />} />
+		</Route>
+	  </Route>
 
       {/* ADMIN ROUTES (Requires login + 'admin' role) */}
       <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

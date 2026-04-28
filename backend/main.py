@@ -1,11 +1,14 @@
 from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
-from models import db
-from routes import auth_bp, shop_bp, cart_bp
 import os
 
+# 1. LOAD ENVIRONMENT VARIABLES FIRST!
 load_dotenv()
+
+# 2. NOW IT IS SAFE TO IMPORT YOUR LOCAL MODULES
+from models import db
+from routes import auth_bp, shop_bp, cart_bp
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})

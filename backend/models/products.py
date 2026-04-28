@@ -43,3 +43,17 @@ def get_product_by_seller_id(sellerid):
 
 def get_product(product_id):
 	return Product.objects.get(pk=product_id)
+
+def delete_product(product_id):
+	product = Product.objects(pk=product_id).first()
+	if product:
+		product.delete()
+		return True
+	return False
+
+def update_product(product_id, update_data):
+	product = Product.objects(pk=product_id).first()
+	if product:
+		product.update(**update_data)
+		return True
+	return False

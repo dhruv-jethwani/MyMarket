@@ -4,7 +4,8 @@ import * as z from 'zod'
 import axios from 'axios'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeSlash } from 'react-bootstrap-icons'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { jwtDecode } from 'jwt-decode'
 
 // Standard V4 Import
 import { animate, stagger } from 'animejs';
@@ -15,6 +16,7 @@ const loginSchema = z.object({
 })
 
 function Login() {
+	const navigate = useNavigate()
     const API = '/auth/login'
     const [showPassword, setShowPassword] = useState(false)
     const cardRef = useRef(null);
@@ -90,8 +92,22 @@ function Login() {
         try {
             const res = await axios.post(API, data)
             const token = res.data.token; 
+			const decoded = jwtDecode(token)
             localStorage.setItem('token', token)
+			localStorage.setItem('role', decoded.role)
             reset()
+			if (decoded.role == "customer"){
+				navigate('/shop')
+			}
+			else if (decoded.role == "seller"){
+				navigate('/add_product')
+			}
+			else if (decoded.role == "admin"){
+				navigate('/admin/users')
+			}
+			else {
+				console.log("Invalid user role")
+			}
         } catch (error) {
             console.log(error)
         }

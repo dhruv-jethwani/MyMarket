@@ -30,7 +30,8 @@ def login():
         
         # 3. Now it is safe to grab the ID and build the token
         payload = {
-            'user': user, # Use str(user.id) so PyJWT can encode it properly
+            'user_id': str(user.id), # Converted to string so PyJWT can encode it
+            'role': user.role,       # Needed for your frontend role checks!
             "exp": int(time.time()) + 3600
         }
         token = jwt.encode(payload, os.getenv('SECRET_KEY'), algorithm='HS256')
@@ -42,4 +43,3 @@ def login():
         
     # 4. If user is None or password is wrong, safely drop down here
     return jsonify({"error": "Invalid credentials"}), 401
-
