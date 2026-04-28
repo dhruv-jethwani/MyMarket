@@ -10,7 +10,7 @@
 * **Backend:** Python (Flask)
 * **Database:** MongoDB (Flexible Document Schema)
 * **Authentication:** JWT (JSON Web Tokens)
-* **Styling:** CSS3 / Tailwind
+* **Styling:** CSS3 / Tailwind / animejs(For Animations)
 
 ---
 
@@ -29,22 +29,38 @@
 The project follows a hybrid architecture: **Common** components remain in the root directory, while **Specific** components are nested within role-based folders for maximum security and organization.
 
 ```text
-src/components/
-├── admin/                 # Role Specific: Admin Only
-│   └── UserControl.jsx    # Manage user roles & accounts
-├── staff/                 # Role Specific: Staff/Manager Only
-│   ├── InventoryMgt.jsx   # Product CRUD & Stock updates
-│   └── OrderFulfillment.jsx # Global order tracking & status updates
-├── customer/              # Role Specific: Customer Only
-│   ├── Cart.jsx           # Shopping cart logic
-│   ├── Checkout.jsx       # Payment & Shipping forms
-│   └── OrderHistory.jsx   # Personal purchase records
-├── Home.jsx               # COMMON (Everyone)
-├── Shop.jsx               # COMMON (Everyone)
-├── ProductDetail.jsx      # COMMON (Everyone)
-├── Profile.jsx            # COMMON (Everyone)
-├── Login.jsx              # COMMON (Everyone)
-└── Register.jsx           # COMMON (Everyone)
+src/
+ ┣ components/
+ ┃ ┣ admin/
+ ┃ ┃ ┣ AllOrders.jsx
+ ┃ ┃ ┣ UserControl.jsx
+ ┃ ┃ ┗ ManageProducts.jsx     
+ ┃ ┣ auth/
+ ┃ ┃ ┣ Login.jsx
+ ┃ ┃ ┣ Register.jsx
+ ┃ ┃ ┗ ProtectedRoute.jsx     <-- NEW: Your Security Gatekeeper
+ ┃ ┣ common/
+ ┃ ┃ ┣ Home.jsx
+ ┃ ┃ ┣ ProductDetail.jsx
+ ┃ ┃ ┣ Profile.jsx
+ ┃ ┃ ┗ ProductCard.jsx        
+ ┃ ┣ customer/
+ ┃ ┃ ┣ Shop.jsx               
+ ┃ ┃ ┣ Cart.jsx
+ ┃ ┃ ┣ Checkout.jsx
+ ┃ ┃ ┗ OrderHistory.jsx
+ ┃ ┗ seller/
+ ┃   ┣ AddProduct.jsx
+ ┃   ┣ ManageInventory.jsx
+ ┃   ┗ ManageOrders.jsx
+ ┣ layouts/                   <-- NEW FOLDER: UI Wrappers
+ ┃ ┣ AdminLayout.jsx          (Contains Admin Navbar & Sidebar)
+ ┃ ┣ CustomerLayout.jsx       (Contains Customer Navbar & Cart Icon)
+ ┃ ┗ SellerLayout.jsx         (Contains Seller Navbar & Stats)
+ ┣ App.css
+ ┣ App.jsx                    <-- Where your routes and layouts combine
+ ┣ index.css
+ ┗ main.jsx
 ```
 ---
 
@@ -68,8 +84,8 @@ The React frontend uses conditional rendering and higher-order components to ens
 
 ## 🗄️ Database Schema Design (MongoDB)
 
-* **Users:** `_id, username, email, password_hash, role (customer/staff/admin), address, created_at`
-* **Products:** `_id, name, price, description, category, stock_quantity, image_url, specifications (flexible object)`
+* **Users:** `_id, fullname, username, email, password, role, address, created_at`
+* **Products:** `_id, name, description, seller, price, category, stock_quantity, image_url, specifications (flexible object)`
 * **Carts:** `_id, user_id, items: [{product_id, quantity}], updated_at`
 * **Orders:** `_id, user_id, items: [{name, price_at_purchase, quantity}], total_amount, status, timestamp`
 
@@ -89,7 +105,7 @@ The React frontend uses conditional rendering and higher-order components to ens
 ### **Frontend (React)**
 1. Navigate to the frontend directory: `cd frontend`
 2. Install dependencies: `npm install`
-3. Start the development server: `npm start`
+3. Start the development server: `npm run dev`
 
 ---
 
