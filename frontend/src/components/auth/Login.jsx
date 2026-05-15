@@ -97,7 +97,7 @@ function Login() {
 			localStorage.setItem('role', decoded.role)
             reset()
 			if (decoded.role == "customer"){
-				navigate('/shop')
+				navigate('/store')
 			}
 			else if (decoded.role == "seller"){
 				navigate('/add_product')

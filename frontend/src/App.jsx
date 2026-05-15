@@ -33,8 +33,8 @@ function App() {
       {/* CUSTOMER ROUTES (Requires login + 'customer' role) */}
       <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
         <Route element={<CustomerLayout />}>
-          <Route path='/shop' element={<Shop />} />
-          <Route path='/cart' element={<Cart />} />
+          <Route path='/store' element={<Shop />} />
+          <Route path='/items' element={<Cart />} />
           <Route path='/history' element={<OrderHistory />} />
         </Route>
       </Route>

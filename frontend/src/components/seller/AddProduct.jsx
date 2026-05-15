@@ -5,16 +5,17 @@ import * as z from 'zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { jwtDecode } from 'jwt-decode';
 import { animate, stagger } from 'animejs';
-import { CloudUpload, Image as ImageIcon, Trash, Plus, TagFill } from 'react-bootstrap-icons';
+// Added Check2Circle and XCircle for the notification icons
+import { CloudUpload, Image as ImageIcon, Trash, Plus, TagFill, Check2Circle, XCircle } from 'react-bootstrap-icons';
 
 const productSchema = z.object({
     name: z.string().min(1, "Product Name is required"),
     description: z.string().min(1, "Description is required"),
     seller: z.string(),
+    cost_price: z.coerce.number().positive("Price must be greater than 0."),
     price: z.coerce.number().positive("Price must be greater than 0."),
     category: z.string().min(1, "Category is required"),
     stock_quantity: z.coerce.number().int().nonnegative("Quantity cannot be negative."),
-    // Validating that an actual file was selected
     image: z.any().refine((files) => files?.length > 0, "Product image is required"),
     specifications: z.array(z.object({
         key: z.string().min(1, "Required"),
@@ -25,6 +26,9 @@ const productSchema = z.object({
 function AddProduct() {
     const formRef = useRef(null);
     const [imagePreview, setImagePreview] = useState(null);
+    
+    // --- NEW TOAST NOTIFICATION STATE ---
+    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     
     // Auth & Identity
     const token = localStorage.getItem('token');
@@ -45,6 +49,13 @@ function AddProduct() {
         name: "specifications"
     });
 
+    // --- NEW TOAST FUNCTION ---
+    const showToast = (message, type = 'success') => {
+        setToast({ visible: true, message, type });
+        // Auto-hide after 3 seconds
+        setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
+    };
+
     // --- LIVE IMAGE PREVIEW LOGIC ---
     const uploadedImage = watch('image');
     
@@ -54,7 +65,6 @@ function AddProduct() {
             const objectUrl = URL.createObjectURL(file);
             setImagePreview(objectUrl);
             
-            // Clean up memory to avoid leaks
             return () => URL.revokeObjectURL(objectUrl);
         } else {
             setImagePreview(null);
@@ -75,44 +85,51 @@ function AddProduct() {
     const API = '/shop/product';
 
     async function onSubmit(data) {
-        // Because we are sending a file, we MUST use FormData
         const formData = new FormData();
         
         formData.append('name', data.name);
         formData.append('description', data.description);
+        formData.append('cost_price', data.cost_price);
         formData.append('price', data.price);
         formData.append('category', data.category);
         formData.append('stock_quantity', data.stock_quantity);
         formData.append('seller', data.seller);
         
-        // Attach the physical image file
         formData.append('image', data.image[0]);
 
-        // Stringify specs array since FormData only accepts strings/blobs
         const specsObj = data.specifications.reduce((acc, { key, value }) => ({ ...acc, [key]: value }), {});
         formData.append('specifications', JSON.stringify(specsObj));
         
         try {
             await axios.post(API, formData, {
-                // Critical header for file uploads
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            alert("Product added successfully!");
+            // Replaced alert with custom toast
+            showToast("Product added successfully!", "success");
             reset();
             setImagePreview(null);
         } catch (error) {
             console.error(error);
-            alert("Failed to add product. Check console.");
+            // Replaced alert with custom toast
+            showToast("Failed to add product. Check console.", "error");
         }
     }
 
-    // Common Tailwind classes
     const inputStyle = "w-full px-4 py-3 mt-1 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none border-gray-200 bg-slate-50 text-gray-900 transition-all";
     const labelStyle = "block text-sm font-bold text-slate-700 mt-4";
     const errorStyle = "text-[11px] font-bold text-red-500 mt-1 uppercase tracking-wide";
 
     return (
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto relative">
+            
+            {/* --- CUSTOM TOAST NOTIFICATION UI --- */}
+            {toast.visible && (
+                <div className={`fixed top-8 right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold transition-all duration-300 ${toast.type === 'success' ? 'bg-green-500 shadow-green-200' : 'bg-red-500 shadow-red-200'}`}>
+                    {toast.type === 'success' ? <Check2Circle size={24} /> : <XCircle size={24} />}
+                    {toast.message}
+                </div>
+            )}
+
             <div className="mb-8 form-section opacity-0">
                 <h2 className="text-3xl font-black text-slate-900">Add New Product</h2>
                 <p className="text-slate-500 mt-1">Fill out the details below to list a new item in your inventory.</p>
@@ -137,9 +154,14 @@ function AddProduct() {
                         />
                         {errors.description && <p className={errorStyle}>{errors.description.message}</p>}
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <label className={labelStyle}>Price (₹)</label>
+                                <label className={labelStyle}>Cost Price (₹)</label>
+                                <input type="number" step="0.01" {...register('cost_price')} className={inputStyle} placeholder='0.00' />
+                                {errors.cost_price && <p className={errorStyle}>{errors.cost_price.message}</p>}
+                            </div>
+                            <div>
+                                <label className={labelStyle}>Sell Price (₹)</label>
                                 <input type="number" step="0.01" {...register('price')} className={inputStyle} placeholder='0.00' />
                                 {errors.price && <p className={errorStyle}>{errors.price.message}</p>}
                             </div>

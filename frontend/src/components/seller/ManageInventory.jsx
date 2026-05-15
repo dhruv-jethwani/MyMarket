@@ -159,7 +159,7 @@ function ManageInventory() {
                                     <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-auto">
                                         <div>
                                             <p className="text-xs font-bold text-slate-400 uppercase">Price</p>
-                                            <p className="text-lg font-black text-blue-600">${product.price}</p>
+                                            <p className="text-lg font-black text-blue-600">₹{product.price}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs font-bold text-slate-400 uppercase">Stock</p>

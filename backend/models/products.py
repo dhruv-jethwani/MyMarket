@@ -15,6 +15,7 @@ class Product(db.Document):
 	name = StringField(required=True)
 	description = StringField(required=True)
 	seller = ReferenceField('User', required=True, reverse_delete_rule=db.CASCADE)
+	cost_price = IntField(required=True)
 	price = IntField(required=True)
 	category = StringField(choices=['general', 'electronics', 'food'], default='general')
 	stock_quantity = IntField(required=True)
@@ -25,11 +26,12 @@ class Product(db.Document):
 def getallproducts():
 	return Product.objects.all()
 
-def add_product(name, description, seller, price, category, stock_quantity, image_url, specifications):
+def add_product(name, description, seller, cost_price, price, category, stock_quantity, image_url, specifications):
 	product = Product(
 		name=name, 
 		description=description, 
 		seller=seller, 
+		cost_price=cost_price,
 		price=price, 
 		category=category, 
 		stock_quantity=stock_quantity, 

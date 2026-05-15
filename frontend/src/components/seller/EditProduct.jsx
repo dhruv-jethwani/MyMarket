@@ -9,6 +9,7 @@ import { CloudUpload, Image as ImageIcon, Trash, Plus, TagFill, X, Check2Circle 
 const editSchema = z.object({
     name: z.string().min(1, "Product Name is required"),
     description: z.string().min(1, "Description is required"),
+    cost_price: z.coerce.number().positive("Price must be greater than 0."),
     price: z.coerce.number().positive("Price must be greater than 0."),
     category: z.string().min(1, "Category is required"),
     stock_quantity: z.coerce.number().int().nonnegative("Quantity cannot be negative."),
@@ -52,6 +53,7 @@ function EditProduct({ productId, onCancel, onSuccess }) {
                 reset({
                     name: product.name,
                     description: product.description,
+                    cost_price: product.cost_price,
                     price: product.price,
                     category: product.category,
                     stock_quantity: product.stock_quantity,
@@ -101,6 +103,7 @@ function EditProduct({ productId, onCancel, onSuccess }) {
         
         formData.append('name', data.name);
         formData.append('description', data.description);
+        formData.append('cost_price', data.cost_price);
         formData.append('price', data.price);
         formData.append('category', data.category);
         formData.append('stock_quantity', data.stock_quantity);
@@ -172,15 +175,20 @@ function EditProduct({ productId, onCancel, onSuccess }) {
                         <textarea {...register('description')} className={`${inputStyle} min-h-[120px] resize-y`} />
                         {errors.description && <p className={errorStyle}>{errors.description.message}</p>}
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
+							<div>
+                                <label className={labelStyle}>Cost Price (₹)</label>
+                                <input type="number" step="0.01" {...register('cost_price')} className={inputStyle} placeholder='0.00' />
+                                {errors.cost_price && <p className={errorStyle}>{errors.cost_price.message}</p>}
+                            </div>
                             <div>
-                                <label className={labelStyle}>Price ($)</label>
-                                <input type="number" step="0.01" {...register('price')} className={inputStyle} />
+                                <label className={labelStyle}>Sell Price (₹)</label>
+                                <input type="number" step="0.01" {...register('price')} className={inputStyle} placeholder='0.00' />
                                 {errors.price && <p className={errorStyle}>{errors.price.message}</p>}
                             </div>
                             <div>
                                 <label className={labelStyle}>Stock Quantity</label>
-                                <input type="number" {...register('stock_quantity')} className={inputStyle} />
+                                <input type="number" {...register('stock_quantity')} className={inputStyle} placeholder='e.g., 50' />
                                 {errors.stock_quantity && <p className={errorStyle}>{errors.stock_quantity.message}</p>}
                             </div>
                         </div>

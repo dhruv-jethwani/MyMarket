@@ -44,6 +44,7 @@ def product():
             name = request.form.get("name")
             description = request.form.get("description")
             seller = request.form.get("seller")
+            cost_price = request.form.get("cost_price")
             price = request.form.get("price")
             category = request.form.get("category")
             stock_quantity = request.form.get("stock_quantity")
@@ -75,6 +76,7 @@ def product():
                 name=name, 
                 description=description, 
                 seller=seller, 
+                cost_price=cost_price,
                 price=price, 
                 category=category, 
                 stock_quantity=stock_quantity, 
@@ -112,7 +114,6 @@ def get__product(product_id):
         # 2. DELETE: REMOVE PRODUCT + CLEANUP CLOUDINARY
         # ==========================================
         elif request.method == 'DELETE':
-            from models.products import delete_product
             
             # Fetch the product FIRST to get its image URL
             product = get_product(product_id)
@@ -135,14 +136,11 @@ def get__product(product_id):
         # 3. PATCH: PARTIAL UPDATE & IMAGE SWAP
         # ==========================================
         elif request.method == 'PATCH':
-            from models.products import update_product
-            import json
-            import cloudinary.uploader
-            
+                        
             update_data = {}
             
             # Grab basic text fields
-            text_fields = ["name", "description", "price", "category", "stock_quantity"]
+            text_fields = ["name", "description", "cost_price", "price", "category", "stock_quantity"]
             for field in text_fields:
                 if request.form.get(field):
                     update_data[field] = request.form.get(field)

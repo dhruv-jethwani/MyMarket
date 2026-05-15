@@ -15,7 +15,7 @@ function ProtectedRoute({ allowedRoles }) {
     if (allowedRoles && !allowedRoles.includes(userRole)) {
         
         // Send them back to their own specific dashboard so they aren't just stuck
-        if (userRole === 'customer') return <Navigate to="/shop" replace />;
+        if (userRole === 'customer') return <Navigate to="/store" replace />;
         if (userRole === 'seller') return <Navigate to="/add_product" replace />;
         if (userRole === 'admin') return <Navigate to="/admin/users" replace />;
         
