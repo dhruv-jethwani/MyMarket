@@ -26,6 +26,6 @@ def get_create_cart(user_id):
     return cart
 
 def clear_cart(user_id):
-    cart = Cart.objects(user=user_id).first()
+    cart = get_create_cart(user_id) 
     cart.items = []
     return cart.save()

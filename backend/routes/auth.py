@@ -32,6 +32,7 @@ def login():
         payload = {
             'user_id': str(user.id), # Converted to string so PyJWT can encode it
             'role': user.role,       # Needed for your frontend role checks!
+            'fullname': user.fullname,
             "exp": int(time.time()) + 3600
         }
         token = jwt.encode(payload, os.getenv('SECRET_KEY'), algorithm='HS256')
