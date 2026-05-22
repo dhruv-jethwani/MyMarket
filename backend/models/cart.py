@@ -29,3 +29,9 @@ def clear_cart(user_id):
     cart = get_create_cart(user_id) 
     cart.items = []
     return cart.save()
+
+def delete_cart_item(user_id, product_id):
+    return Cart.objects(user=user_id).update_one(
+        pull__items__product=product_id,
+        set__updated_at=get_ist_now()
+    )
