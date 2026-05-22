@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -8,10 +8,12 @@ import { Search, BoxSeam, Check2Circle, XCircle, Plus, Dash, Filter } from 'reac
 function Shop() {
     const API_PRODUCTS = '/shop/product';
     const API_CART = '/cart/add_cart';
+    const CART_API = '/cart/get_cart';
     const navigate = useNavigate();
     
     // --- STATE ---
     const [products, setProducts] = useState([]);
+    const [cart, setCart] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,24 +24,53 @@ function Shop() {
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
     
-    // LOCAL CART STAGING: Stores { "product_id": quantity }
+    // LOCAL CART STAGING & BASELINE
     const [localCart, setLocalCart] = useState({});
+    const [dbCartState, setDbCartState] = useState({}); // NEW: Tracks the original DB state
 
-    // --- FETCH PRODUCTS ---
+    // --- FETCH DATA (PRODUCTS & EXISTING CART) ---
     useEffect(() => {
-        async function fetchAllProducts() {
+        const loadStoreData = async () => {
+            setIsLoading(true);
             try {
-                const res = await axios.get(API_PRODUCTS);
-                if (res.data && res.data.products) {
-                    setProducts(res.data.products);
+                // 1. Fetch Products
+                const prodRes = await axios.get(API_PRODUCTS);
+                if (prodRes.data && prodRes.data.products) {
+                    setProducts(prodRes.data.products);
+                }
+
+                // 2. Fetch Cart (If user is logged in)
+                const currentToken = localStorage.getItem('token');
+                if (currentToken) {
+                    const cartRes = await axios.get(CART_API, {
+                        headers: { Authorization: `Bearer ${currentToken}` }
+                    });
+                    
+                    if (cartRes.data && cartRes.data.cart) {
+                        setCart(cartRes.data.cart);
+                        
+                        // Populate local staging cart so UI instantly reflects database cart
+                        if (cartRes.data.cart.items) {
+                            const existingCart = {};
+                            cartRes.data.cart.items.forEach(item => {
+                                const pid = item.product?._id?.$oid || item.product?.$oid || item.product?.id;
+                                if (pid) {
+                                    existingCart[pid] = item.quantity;
+                                }
+                            });
+                            setLocalCart(existingCart);
+                            setDbCartState(existingCart); // Set the baseline
+                        }
+                    }
                 }
             } catch (error) {
-                console.error("Failed to fetch products:", error);
+                console.error("Error loading store data:", error);
             } finally {
                 setIsLoading(false);
             }
-        }
-        fetchAllProducts();
+        };
+
+        loadStoreData();
     }, []);
 
     // --- ENTRANCE ANIMATIONS ---
@@ -117,8 +148,10 @@ function Shop() {
             };
 
             await axios.post(API_CART, payload);
-            showToast("Cart saved successfully!", "success");
-            setLocalCart({});
+            showToast("Cart updated successfully!", "success");
+            
+            // Update the baseline so the footer accurately reflects the new saved state
+            setDbCartState({...localCart}); 
         } catch (error) {
             console.error(error);
             showToast("Failed to save cart.", "error");
@@ -128,14 +161,11 @@ function Shop() {
     };
 
     // --- DERIVED DATA & FILTERS ---
-    
-    // Dynamically extract all unique categories from the products array
     const uniqueCategories = useMemo(() => {
         const categories = products.map(p => p.category);
         return ['All', ...new Set(categories)];
     }, [products]);
 
-    // Apply all filters (Search, Category, Min Price, Max Price)
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
             const searchLower = searchTerm.toLowerCase();
@@ -151,7 +181,6 @@ function Shop() {
         });
     }, [products, searchTerm, selectedCategory, minPrice, maxPrice]);
 
-    // Calculate staging totals
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;
         let price = 0;
@@ -165,7 +194,10 @@ function Shop() {
         return { totalItems: items, totalPrice: price.toFixed(2) };
     }, [localCart, products]);
 
+    // NEW LOGIC: Show footer if there are items OR if the local cart differs from the DB cart
     const hasStagedItems = Object.keys(localCart).length > 0;
+    const hasUnsavedChanges = JSON.stringify(localCart) !== JSON.stringify(dbCartState);
+    const showFooter = hasStagedItems || hasUnsavedChanges;
 
     if (isLoading) {
         return (
@@ -176,7 +208,7 @@ function Shop() {
     }
 
     return (
-        <div className={`max-w-7xl mx-auto relative ${hasStagedItems ? 'pb-32' : 'pb-8'}`}>
+        <div className={`max-w-7xl mx-auto relative ${showFooter ? 'pb-32' : 'pb-8'}`}>
             
             {/* TOAST NOTIFICATION */}
             {toast.visible && (
@@ -194,8 +226,6 @@ function Shop() {
 
             {/* FILTER PANEL */}
             <div className="filter-panel opacity-0 bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col lg:flex-row gap-4 items-center">
-                
-                {/* Search Bar */}
                 <div className="relative w-full lg:flex-1">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Search className="text-slate-400" size={16} />
@@ -212,7 +242,6 @@ function Shop() {
                 <div className="w-px h-8 bg-slate-200 hidden lg:block"></div>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-                    {/* Category Filter */}
                     <div className="flex-1 sm:w-48 relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <Filter className="text-slate-400" size={16} />
@@ -230,7 +259,6 @@ function Shop() {
                         </select>
                     </div>
 
-                    {/* Price Range Filters */}
                     <div className="flex items-center gap-2 flex-1 sm:w-64">
                         <input 
                             type="number" 
@@ -251,7 +279,7 @@ function Shop() {
                 </div>
             </div>
 
-            {/* EMPTY STATE */}
+            {/* PRODUCT GRID */}
             {filteredProducts.length === 0 ? (
                 <div className="bg-white border border-slate-200 border-dashed rounded-3xl p-12 text-center mt-8">
                     <Search size={48} className="mx-auto text-slate-300 mb-4" />
@@ -265,7 +293,6 @@ function Shop() {
                     </button>
                 </div>
             ) : (
-                /* PRODUCT GRID */
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
                     {filteredProducts.map(product => {
                         const productId = product._id.$oid || product._id;
@@ -274,6 +301,7 @@ function Shop() {
                         return (
                             <div key={productId} className="product-card opacity-0 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group relative">
                                 
+                                {/* Badge clearly shows items currently in cart */}
                                 {qtyInCart > 0 && (
                                     <div className="absolute top-4 right-4 z-10 bg-blue-600 text-white text-xs font-black h-8 w-8 flex items-center justify-center rounded-full shadow-lg shadow-blue-200">
                                         {qtyInCart}
@@ -307,7 +335,6 @@ function Shop() {
                                         <div className="mt-1">
                                             <span className="text-lg font-black text-blue-600">₹{product.price}</span>
                                         </div>
-                                        {/* IN STOCK INDICATOR */}
                                         <p className={`text-xs font-bold mt-1 ${product.stock_quantity > 0 ? 'text-green-500' : 'text-red-500'}`}>
                                             {product.stock_quantity > 0 ? `${product.stock_quantity} in stock` : 'Out of Stock'}
                                         </p>
@@ -342,31 +369,33 @@ function Shop() {
             )}
 
             {/* --- STRICTLY CONDITIONAL FOOTER --- */}
-            {hasStagedItems && (
+            {showFooter && (
                 <div className="fixed bottom-0 left-0 md:left-64 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] py-4 px-6 md:px-12 z-50 flex flex-col sm:flex-row items-center justify-between animate-[slideUp_0.4s_ease-out_forwards]">
                     <div className="text-center sm:text-left mb-4 sm:mb-0">
-						<p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Ready to Add</p>
-						{/* Changed gap-3 to gap-6 below */}
-						<div className="flex items-baseline gap-6 justify-center sm:justify-start">
-							<span className="text-2xl font-black text-slate-900">{totalItems} {totalItems === 1 ? 'Item' : 'Items'}</span>
-							<span className="text-lg font-bold text-blue-600">Total: ₹{totalPrice}</span>
-						</div>
-					</div>
-
+                        <p className={`text-xs font-bold uppercase tracking-wide ${hasUnsavedChanges ? 'text-orange-500' : 'text-slate-400'}`}>
+                            {hasUnsavedChanges ? 'Unsaved Changes' : 'Cart Items'}
+                        </p>
+                        <div className="flex items-baseline gap-6 justify-center sm:justify-start">
+                            <span className="text-2xl font-black text-slate-900">{totalItems} {totalItems === 1 ? 'Item' : 'Items'}</span>
+                            <span className="text-lg font-bold text-blue-600">Total: ₹{totalPrice}</span>
+                        </div>
+                    </div>
                     
                     <div className="flex gap-4 w-full sm:w-auto">
-                        <button 
-                            onClick={() => setLocalCart({})}
-                            className="flex-1 sm:flex-none px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
-                        >
-                            Clear
-                        </button>
+                        {totalItems > 0 && (
+                            <button 
+                                onClick={() => setLocalCart({})}
+                                className="flex-1 sm:flex-none px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+                            >
+                                Clear
+                            </button>
+                        )}
                         <button 
                             onClick={handleConfirmCart}
-                            disabled={isSubmitting}
-                            className="flex-1 sm:flex-none px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                            disabled={isSubmitting || !hasUnsavedChanges}
+                            className={`flex-1 sm:flex-none px-8 py-3 text-white rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70 ${hasUnsavedChanges ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'}`}
                         >
-                            {isSubmitting ? 'Saving...' : 'Confirm & Add to Cart'}
+                            {isSubmitting ? 'Saving...' : (totalItems === 0 ? 'Save Empty Cart' : 'Save Cart')}
                         </button>
                     </div>
                 </div>

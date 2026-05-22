@@ -1,6 +1,7 @@
 from . import db
 from mongoengine import IntField, DateTimeField, ReferenceField, EmbeddedDocument, EmbeddedDocumentField, ListField
 from datetime import datetime, timedelta, timezone
+from bson import ObjectId
 
 IST = timezone(timedelta(hours=5, minutes=30))
 def get_ist_now():
@@ -32,6 +33,6 @@ def clear_cart(user_id):
 
 def delete_cart_item(user_id, product_id):
     return Cart.objects(user=user_id).update_one(
-        pull__items__product=product_id,
+        pull__items__product=ObjectId(product_id), 
         set__updated_at=get_ist_now()
     )

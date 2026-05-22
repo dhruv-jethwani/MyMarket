@@ -62,10 +62,26 @@ def get_cart():
         if not user_id:
             return jsonify({"error": "Invalid token payload"}), 401
 
-        # 3. Fetch the cart using the securely verified user_id
         cart = get_create_cart(user_id)
         
-        cart_data = json.loads(cart.to_json())
+        cart_data = {
+            "_id": {"$oid": str(cart.id)},
+            "updated_at": cart.updated_at.isoformat(),
+            "items": []
+        }
+        
+        for item in cart.items:
+            # Accessing item.product automatically triggers MongoEngine to fetch the full product document
+            if item.product: 
+                cart_data["items"].append({
+                    "quantity": item.quantity,
+                    "product": {
+                        "_id": {"$oid": str(item.product.id)},
+                        "name": item.product.name,
+                        "price": item.product.price,
+                        "image_url": getattr(item.product, 'image_url', '') # Safe fallback
+                    }
+                })
         
         return jsonify({
             "message": "Cart retrieved", 
