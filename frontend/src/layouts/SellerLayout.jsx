@@ -8,7 +8,8 @@ import {
     BoxArrowRight, 
     PersonCircle,
     GraphUp,
-    Check2Circle
+    Check2Circle,
+	JournalText
 } from 'react-bootstrap-icons';
 
 export default function SellerLayout() {
@@ -49,7 +50,8 @@ export default function SellerLayout() {
         { path: '/add_product', name: 'Add Product', icon: <PlusCircle size={20} /> },
         { path: '/inventory', name: 'Manage Inventory', icon: <BoxSeam size={20} /> },
         { path: '/manage_orders', name: 'Seller Orders', icon: <CardList size={20} /> },
-		{ path: '/analytics', name: 'Analytics', icon: <GraphUp size={20} /> }
+		{ path: '/analytics', name: 'Analytics', icon: <GraphUp size={20} /> },
+		{ path: '/ledger', name: 'Financial Ledger', icon: <JournalText size={20} /> }
     ];
 
     const handleLogout = () => {

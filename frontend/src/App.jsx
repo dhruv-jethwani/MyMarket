@@ -22,6 +22,7 @@ import UserControl from './components/admin/UserControl'
 import ProductDetail from './components/common/ProductDetail'
 import Checkout from './components/customer/Checkout'
 import SellerAnalytics from './components/seller/SellerAnalytics'
+import SellerLedger from './components/seller/SellerLedger'
 
 function App() {
   return (
@@ -51,7 +52,7 @@ function App() {
 			<Route path='/inventory' element={<ManageInventory />} />
 			<Route path='/manage_orders' element={<ManageOrders />} />
 			<Route path='/analytics' element={<SellerAnalytics />} />
-			{/* NEW: Seller can view product details */}
+			<Route path='/ledger' element={<SellerLedger />} />
 			<Route path='/product/:id' element={<ProductDetail />} />
 		</Route>
 	  </Route>

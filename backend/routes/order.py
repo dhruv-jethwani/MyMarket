@@ -1,6 +1,6 @@
 from . import order_bp
 from flask import request, jsonify
-from models.orders import create_order, OrderItem, Order
+from models.orders import process_checkout, Order, get_seller_orders, get_seller_analytics_data, update_order_status
 from models.cart import clear_cart
 import jwt
 import os
@@ -17,36 +17,16 @@ def place_order():
         if not user_id or not raw_items:
             return jsonify({"error": "Missing order data"}), 400
 
-        order_items = []
-        total_amount = 0.0
-
-        for item in raw_items:
-            product_data = item.get('product', {})
-            name = product_data.get('name', 'Unknown')
-            price = float(product_data.get('price', 0))
-            qty = int(item.get('quantity', 1))
-
-            order_items.append(OrderItem(
-                name=name,
-                price_at_purchase=price,
-                quantity=qty
-            ))
-            total_amount += (price * qty)
-
-        create_order(user_id, order_items, total_amount, payment_status, gateway_ref)
-
+        process_checkout(user_id, raw_items, payment_status, gateway_ref)
         clear_cart(user_id)
 
         return jsonify({"message": "Order placed successfully"}), 201
-
     except Exception as e:
-        print(f"Error placing order: {e}")
         return jsonify({"error": str(e)}), 500
 
 @order_bp.route('/history', methods=['GET'])
 def get_order_history():
     try:
-        # Securely grab the token from headers
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):
             return jsonify({"error": "Missing or invalid authorization header"}), 401
@@ -55,10 +35,7 @@ def get_order_history():
         decoded_token = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=["HS256"])
         user_id = decoded_token.get('user_id')
 
-        # Fetch orders sorted by newest first
         orders = Order.objects(user=user_id).order_by('-timestamp')
-
-        # Manually format to JSON to resolve ObjectIds and Dates safely
         orders_data = []
         for order in orders:
             orders_data.append({
@@ -71,7 +48,58 @@ def get_order_history():
             })
 
         return jsonify({"message": "Orders retrieved", "orders": orders_data}), 200
-
     except Exception as e:
-        print(f"Error fetching order history: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
+@order_bp.route('/seller_orders', methods=['GET'])
+def seller_orders_route():
+    try:
+        auth_header = request.headers.get('Authorization')
+        token = auth_header.split(" ")[1]
+        decoded_token = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=["HS256"])
+        seller_id = decoded_token.get('user_id')
+        
+        orders = get_seller_orders(seller_id)
+        orders_data = []
+        for order in orders:
+            seller_items = [{"name": i.name, "price": i.price_at_purchase, "quantity": i.quantity} for i in order.items if i.seller_id == seller_id]
+            if seller_items:
+                orders_data.append({
+                    "id": str(order.id),
+                    "timestamp": order.timestamp.isoformat(),
+                    "status": order.status,
+                    "items": seller_items,
+                    "order_total": sum(i['price'] * i['quantity'] for i in seller_items)
+                })
+        return jsonify({"orders": orders_data}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# --- NEW: UPDATE STATUS ROUTE ---
+@order_bp.route('/update_status/<order_id>', methods=['PATCH'])
+def update_status_route(order_id):
+    try:
+        data = request.get_json()
+        new_status = data.get('status')
+        if not new_status:
+            return jsonify({"error": "No status provided"}), 400
+
+        success = update_order_status(order_id, new_status)
+        if success:
+            return jsonify({"message": "Status updated successfully"}), 200
+        return jsonify({"error": "Failed to update status"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@order_bp.route('/seller_analytics', methods=['GET'])
+def seller_analytics_route():
+    try:
+        auth_header = request.headers.get('Authorization')
+        token = auth_header.split(" ")[1]
+        decoded_token = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=["HS256"])
+        seller_id = decoded_token.get('user_id')
+        
+        analytics = get_seller_analytics_data(seller_id)
+        return jsonify(analytics), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

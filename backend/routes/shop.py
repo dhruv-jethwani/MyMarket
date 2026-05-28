@@ -2,12 +2,13 @@ from . import shop_bp
 from flask import request, jsonify
 import json
 import os
+import jwt
 import cloudinary
 import cloudinary.uploader
+import re
 
-from models.products import add_product, getallproducts, get_product_by_seller_id, get_product, delete_product, update_product
+from models.products import add_product, getallproducts, get_product_by_seller_id, get_product, delete_product, update_product, restock_product, get_seller_ledger
 
-# --- CLOUDINARY CONFIGURATION ---
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
     api_key=os.getenv('CLOUDINARY_API_KEY'),
@@ -15,20 +16,13 @@ cloudinary.config(
     secure=True
 )
 
-import re
-
 def extract_public_id(image_url):
-    """Extracts the Cloudinary public_id from a standard secure_url."""
-    if not image_url or "cloudinary" not in image_url:
-        return None
+    if not image_url or "cloudinary" not in image_url: return None
     try:
-        # Splits the URL at '/upload/' and takes the second half
         parts = image_url.split('/upload/')
         if len(parts) > 1:
             path = parts[1]
-            # Removes the version number (e.g., v1712345678/)
             path = re.sub(r'^v\d+/', '', path)
-            # Removes the file extension (e.g., .jpg)
             public_id = path.rsplit('.', 1)[0]
             return public_id
     except Exception as e:
@@ -39,8 +33,6 @@ def extract_public_id(image_url):
 def product():
     if request.method == 'POST':
         try:
-            # 1. EXTRACT TEXT DATA FROM FORM
-            # Because we sent FormData from React, we MUST use request.form, not request.get_json()
             name = request.form.get("name")
             description = request.form.get("description")
             seller = request.form.get("seller")
@@ -49,90 +41,52 @@ def product():
             category = request.form.get("category")
             stock_quantity = request.form.get("stock_quantity")
             
-            # 2. PARSE SPECIFICATIONS
-            # React sent specs as a JSON string like: {"Brand": "Sony", "Color": "Black"}
-            # We need to parse it back into the List format MongoEngine expects: [{"key": "Brand", "value": "Sony"}]
             raw_specs = request.form.get("specifications", "{}")
             specs_dict = json.loads(raw_specs)
             specifications = [{"key": k, "value": v} for k, v in specs_dict.items()]
 
             image_file = request.files.get("image")
-            
             if not image_file:
                 return jsonify({"error": "No image file provided"}), 400
 
-            upload_result = cloudinary.uploader.upload(
-                image_file,
-                folder="MyMarket/products"
-            )
-            
+            upload_result = cloudinary.uploader.upload(image_file, folder="MyMarket/products")
             image_url = upload_result.get("secure_url")
 
-            add_product(
-                name=name, 
-                description=description, 
-                seller=seller, 
-                cost_price=cost_price,
-                price=price, 
-                category=category, 
-                stock_quantity=stock_quantity, 
-                image_url=image_url, 
-                specifications=specifications
-            )
-            
-            return jsonify({
-                "message": "Product added successfully", 
-                "image_url": image_url
-            }), 200
+            add_product(name, description, seller, cost_price, price, category, stock_quantity, image_url, specifications)
+            return jsonify({"message": "Product added successfully", "image_url": image_url}), 200
 
         except Exception as e:
-            print(f"Error adding product: {e}")
             return jsonify({"error": str(e)}), 500
 
-    elif request.method == 'GET': #this is for customer shop
+    elif request.method == 'GET':
         products = getallproducts()
         return jsonify({"message": "Products retrieved successfully", "products": products}), 200
     
 @shop_bp.route('/product/<product_id>', methods=['GET', 'DELETE', 'PATCH'])
 def get__product(product_id):
     try:
-        # ==========================================
-        # 1. GET: FETCH PRODUCT DETAILS
-        # ==========================================
         if request.method == 'GET':
             product = get_product(product_id)
-            if product:
-                return jsonify({"message": "Product retrieved", "product": product}), 200
+            if product: return jsonify({"message": "Product retrieved", "product": product}), 200
             return jsonify({"error": "Product not found"}), 404
             
-        # ==========================================
-        # 2. DELETE: REMOVE PRODUCT + CLEANUP CLOUDINARY
-        # ==========================================
         elif request.method == 'DELETE':
             product = get_product(product_id)
-            if not product:
-                return jsonify({"error": "Product not found"}), 404
+            if not product: return jsonify({"error": "Product not found"}), 404
     
             if product.image_url:
                 public_id = extract_public_id(product.image_url)
-                if public_id:
-                    cloudinary.uploader.destroy(public_id)
+                if public_id: cloudinary.uploader.destroy(public_id)
 
             success = delete_product(product_id)
-            if success:
-                return jsonify({"message": "Product and image deleted successfully"}), 200
+            if success: return jsonify({"message": "Product and image deleted successfully"}), 200
             return jsonify({"error": "Failed to delete product from database"}), 500
             
-        # ==========================================
-        # 3. PATCH: PARTIAL UPDATE & IMAGE SWAP
-        # ==========================================
         elif request.method == 'PATCH':
-                        
             update_data = {}
             text_fields = ["name", "description", "cost_price", "price", "category", "stock_quantity"]
             for field in text_fields:
-                if request.form.get(field):
-                    update_data[field] = request.form.get(field)
+                if request.form.get(field): update_data[field] = request.form.get(field)
         
             if request.form.get("specifications"):
                 raw_specs = request.form.get("specifications")
@@ -141,41 +95,65 @@ def get__product(product_id):
     
             image_file = request.files.get("image")
             if image_file:
-                # 1. Fetch current product to find the old image
                 current_product = get_product(product_id)
                 if current_product and current_product.image_url:
                     old_public_id = extract_public_id(current_product.image_url)
-                    if old_public_id:
-                        # DESTROY the old image
-                        cloudinary.uploader.destroy(old_public_id)
-                
-                # 2. Upload the new image
-                upload_result = cloudinary.uploader.upload(
-                    image_file,
-                    folder="MyMarket/products"
-                )
+                    if old_public_id: cloudinary.uploader.destroy(old_public_id)
+                upload_result = cloudinary.uploader.upload(image_file, folder="MyMarket/products")
                 update_data["image_url"] = upload_result.get("secure_url")
                 
-            if not update_data:
-                return jsonify({"message": "No data provided to update"}), 400
+            if not update_data: return jsonify({"message": "No data provided to update"}), 400
                 
-            # Push changes to database
             success = update_product(product_id, update_data)
-            
-            if success:
-                return jsonify({"message": "Product updated successfully"}), 200
+            if success: return jsonify({"message": "Product updated successfully"}), 200
             return jsonify({"error": "Failed to update product in database"}), 400
 
     except Exception as e:
-        print(f"CRITICAL ERROR in get__product: {e}")
         return jsonify({"error": str(e)}), 500
-        
     return jsonify({"error": "Method Not Allowed"}), 405
-        
-    
+
 @shop_bp.route('/seller', methods=['POST'])
 def seller_products():
     data = request.get_json()
     seller_id = data.get("seller_id")
     products = get_product_by_seller_id(sellerid=seller_id)
     return jsonify({"message": "Products retrieved successfully", "products": products}), 200
+
+# --- NEW: ADD STOCK ROUTE ---
+@shop_bp.route('/product/<product_id>/restock', methods=['PATCH'])
+def restock_route(product_id):
+    try:
+        data = request.get_json()
+        qty = int(data.get('quantity', 0))
+        if qty <= 0: return jsonify({"error": "Quantity must be greater than 0"}), 400
+
+        restock_product(product_id, qty)
+        return jsonify({"message": f"Successfully restocked {qty} units."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# --- NEW: FINANCIAL LEDGER ROUTE ---
+@shop_bp.route('/seller/ledger', methods=['GET'])
+def seller_ledger_route():
+    try:
+        auth_header = request.headers.get('Authorization')
+        token = auth_header.split(" ")[1]
+        decoded = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=["HS256"])
+        seller_id = decoded.get('user_id')
+
+        logs = get_seller_ledger(seller_id)
+        
+        # Serialize for frontend
+        log_data = []
+        for log in logs:
+            log_data.append({
+                "id": str(log.id),
+                "product_name": log.product.name if log.product else "Deleted Product",
+                "quantity_added": log.quantity_added,
+                "cost_price": log.cost_price_per_unit,
+                "total_expense": log.total_expense,
+                "timestamp": log.timestamp.isoformat()
+            })
+        return jsonify({"ledger": log_data}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
