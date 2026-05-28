@@ -12,16 +12,13 @@ def add_to_cart():
 		data = request.get_json()
 		user, raw_items = data.get("user"), data.get("items")
         
-        # 1. Fetch or create the cart
 		cart = get_create_cart(user_id=user)
         
-        # 2. Parse the incoming items
 		if isinstance(raw_items, str):
 			items_dict = json.loads(raw_items)
 		else:
 			items_dict = raw_items
             
-        # 3. Convert them to MongoEngine CartItem objects and save
 		new_items = [CartItem(product=k, quantity=v) for k, v in items_dict.items()]
 		cart.items = new_items
 		cart.save()

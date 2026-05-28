@@ -7,15 +7,20 @@ import {
     CardList, 
     BoxArrowRight, 
     PersonCircle,
-    GraphUp
+    GraphUp,
+    Check2Circle
 } from 'react-bootstrap-icons';
 
 export default function SellerLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const [userName, setUserName] = useState('Seller');
+    
+    // --- GLOBAL PERSISTENT TOAST STATE ---
+    const [globalToast, setGlobalToast] = useState({ visible: false, message: '' });
 
     useEffect(() => {
+        // Decode Token for Name
         const token = localStorage.getItem('token');
         if (token) {
             try {
@@ -25,12 +30,26 @@ export default function SellerLayout() {
                 console.error("Invalid token");
             }
         }
-    }, []);
+
+        // Check if we arrived here from a successful login
+        if (location.state && location.state.loginToast) {
+            setGlobalToast({ visible: true, message: location.state.loginToast });
+            
+            // Clean up the router state so refreshing the page doesn't re-trigger the toast
+            window.history.replaceState({}, document.title);
+
+            // Force it to persist for exactly 5 seconds
+            setTimeout(() => {
+                setGlobalToast({ visible: false, message: '' });
+            }, 5000); 
+        }
+    }, [location]);
 
     const menuItems = [
         { path: '/add_product', name: 'Add Product', icon: <PlusCircle size={20} /> },
         { path: '/inventory', name: 'Manage Inventory', icon: <BoxSeam size={20} /> },
         { path: '/manage_orders', name: 'Seller Orders', icon: <CardList size={20} /> },
+		{ path: '/analytics', name: 'Analytics', icon: <GraphUp size={20} /> }
     ];
 
     const handleLogout = () => {
@@ -40,7 +59,17 @@ export default function SellerLayout() {
     };
 
     return (
-        <div className="flex h-screen bg-slate-50 overflow-hidden">
+        <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+            
+            {/* --- GLOBAL PERSISTENT TOAST --- */}
+            {globalToast.visible && (
+                <div className="fixed top-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold transition-all duration-300 bg-green-500 shadow-green-200">
+                    <Check2Circle size={24} />
+                    {globalToast.message}
+                </div>
+            )}
+
+            {/* SIDEBAR */}
             <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm">
                 <div className="h-16 flex items-center px-6 border-b border-slate-100">
                     <Link to="/" className="text-2xl font-black text-blue-600 tracking-tight">
@@ -82,13 +111,16 @@ export default function SellerLayout() {
                 </div>
             </aside>
 
+            {/* MAIN CONTENT WRAPPER */}
             <div className="flex-1 flex flex-col">
+                {/* TOP HEADER */}
                 <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
                     <div className="flex items-center gap-2 text-slate-500 font-medium">
                         <GraphUp size={18} className="text-blue-500" />
                         <span>Seller Dashboard</span>
                     </div>
                     
+                    {/* CLICKABLE PROFILE LINK */}
                     <Link 
                         to="/profile" 
                         className="flex items-center gap-3 hover:bg-slate-50 p-2 rounded-xl transition-colors cursor-pointer"
@@ -101,6 +133,7 @@ export default function SellerLayout() {
                     </Link>
                 </header>
 
+                {/* PAGE CONTENT */}
                 <main className="flex-1 overflow-y-auto p-8">
                     <Outlet />
                 </main>

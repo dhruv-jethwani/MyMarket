@@ -56,22 +56,18 @@ def product():
             specs_dict = json.loads(raw_specs)
             specifications = [{"key": k, "value": v} for k, v in specs_dict.items()]
 
-            # 3. EXTRACT AND UPLOAD THE IMAGE
             image_file = request.files.get("image")
             
             if not image_file:
                 return jsonify({"error": "No image file provided"}), 400
 
-            # Upload the file stream directly to Cloudinary
             upload_result = cloudinary.uploader.upload(
                 image_file,
-                folder="MyMarket/products" # Places it exactly in the folder you requested
+                folder="MyMarket/products"
             )
             
-            # Extract the secure HTTPS link provided by Cloudinary
             image_url = upload_result.get("secure_url")
 
-            # 4. SAVE TO DATABASE
             add_product(
                 name=name, 
                 description=description, 
@@ -95,7 +91,6 @@ def product():
 
     elif request.method == 'GET': #this is for customer shop
         products = getallproducts()
-        # Fixed the jsonify syntax here so it returns a proper JSON response
         return jsonify({"message": "Products retrieved successfully", "products": products}), 200
     
 @shop_bp.route('/product/<product_id>', methods=['GET', 'DELETE', 'PATCH'])
@@ -114,19 +109,15 @@ def get__product(product_id):
         # 2. DELETE: REMOVE PRODUCT + CLEANUP CLOUDINARY
         # ==========================================
         elif request.method == 'DELETE':
-            
-            # Fetch the product FIRST to get its image URL
             product = get_product(product_id)
             if not product:
                 return jsonify({"error": "Product not found"}), 404
-                
-            # Clean up Cloudinary
+    
             if product.image_url:
                 public_id = extract_public_id(product.image_url)
                 if public_id:
                     cloudinary.uploader.destroy(public_id)
-            
-            # Remove from Database
+
             success = delete_product(product_id)
             if success:
                 return jsonify({"message": "Product and image deleted successfully"}), 200
@@ -138,20 +129,16 @@ def get__product(product_id):
         elif request.method == 'PATCH':
                         
             update_data = {}
-            
-            # Grab basic text fields
             text_fields = ["name", "description", "cost_price", "price", "category", "stock_quantity"]
             for field in text_fields:
                 if request.form.get(field):
                     update_data[field] = request.form.get(field)
-                    
-            # Parse dynamic specifications
+        
             if request.form.get("specifications"):
                 raw_specs = request.form.get("specifications")
                 specs_dict = json.loads(raw_specs)
                 update_data["specifications"] = [{"key": k, "value": v} for k, v in specs_dict.items()]
-                
-            # Handle Cloudinary Image Swap Securely
+    
             image_file = request.files.get("image")
             if image_file:
                 # 1. Fetch current product to find the old image
@@ -186,8 +173,7 @@ def get__product(product_id):
     return jsonify({"error": "Method Not Allowed"}), 405
         
     
-@shop_bp.route('/seller', methods=['POST']) 
-# Changed this to POST because GET requests shouldn't have a JSON body
+@shop_bp.route('/seller', methods=['POST'])
 def seller_products():
     data = request.get_json()
     seller_id = data.get("seller_id")

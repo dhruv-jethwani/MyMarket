@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form'
 import axios from 'axios'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Eye, EyeSlash } from 'react-bootstrap-icons'
-import { Link } from 'react-router-dom' // Added Link in case you want a "Login instead" footer
+import { Eye, EyeSlash, Check2Circle, XCircle } from 'react-bootstrap-icons'
+import { Link, useNavigate } from 'react-router-dom' 
 import { animate, stagger } from 'animejs';
 
 const registerSchema = z.object({
@@ -24,9 +24,13 @@ const registerSchema = z.object({
 })
 
 function Register() {
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false)
     const cardRef = useRef(null);
     const buttonRef = useRef(null);
+    
+    // --- NEW TOAST STATE ---
+    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
 
     const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
         resolver: zodResolver(registerSchema),
@@ -37,7 +41,6 @@ function Register() {
 
     const passwordValue = watch("password", "");
 
-    // Logic for the strength bar
     const calculateStrength = () => {
         let strength = 0;
         if (passwordValue.length >= 8) strength += 33;
@@ -53,7 +56,6 @@ function Register() {
 
     // --- HIGH-END ANIMATION SEQUENCE ---
     useEffect(() => {
-        // 1. The Card: Slight scale up with a dynamic tilt
         animate(cardRef.current, {
             scale: [0.85, 1],
             rotate: [-2, 0],
@@ -62,7 +64,6 @@ function Register() {
             easing: 'easeOutElastic(1, .8)'
         });
 
-        // 2. The Header: Drops down
         animate('.header-anim', {
             translateY: [-30, 0],
             opacity: [0, 1],
@@ -71,12 +72,10 @@ function Register() {
             easing: 'easeOutExpo'
         });
 
-        // 3. The Form: 3D "Unfolding" effect cascading down the fields
         animate('.form-anim', {
             translateY: [40, 0],
             rotateX: [-90, 0], 
             opacity: [0, 1],
-            // Slightly faster stagger (100ms) here since there are many fields
             delay: stagger(100, { start: 500 }),
             duration: 1200,
             easing: 'easeOutBack'
@@ -117,11 +116,18 @@ function Register() {
         try {
             const res = await axios.post(API, data)
             console.log(res)
-            alert("Registration Successful!")
+            
+            // Replaced alert with toast + delayed redirect
+            setToast({ visible: true, message: "Registration Successful! Redirecting...", type: 'success' });
             reset()
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
+
         } catch (error) {
             console.error(error)
-            alert("Registration failed. Check console for details.")
+            setToast({ visible: true, message: error.response?.data?.error || "Registration failed.", type: 'error' });
+            setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
         }
     }
 
@@ -132,6 +138,14 @@ function Register() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
             
+            {/* NEW TOAST SYSTEM */}
+            {toast.visible && (
+                <div className={`fixed top-8 right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold transition-all duration-300 ${toast.type === 'success' ? 'bg-green-500 shadow-green-200' : 'bg-red-500 shadow-red-200'}`}>
+                    {toast.type === 'success' ? <Check2Circle size={24} /> : <XCircle size={24} />}
+                    {toast.message}
+                </div>
+            )}
+
             <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
                 <div className="header-anim opacity-0">
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">
@@ -170,7 +184,6 @@ function Register() {
                             {errors.email && <p className={errorStyle}>{errors.email.message}</p>}
                         </div>
 
-                        {/* PASSWORD SECTION WITH EYE ICON */}
                         <div className="form-anim opacity-0 origin-bottom">
                             <label className={labelStyle}>Password</label>
                             <div className="relative flex items-center">
@@ -190,7 +203,6 @@ function Register() {
                                 </button>
                             </div>
                             
-                            {/* Strength Bar */}
                             <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <div 
                                     className={`h-full transition-all duration-500 ease-out ${strengthColor}`} 
@@ -198,7 +210,6 @@ function Register() {
                                 />
                             </div>
 
-                            {/* Requirement Grid */}
                             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
                                 <div className={`flex items-center text-[11px] font-bold uppercase tracking-wider transition-colors ${passwordValue.length >= 8 ? 'text-green-600' : 'text-slate-400'}`}>
                                     <span className={`mr-2 h-1.5 w-1.5 rounded-full ${passwordValue.length >= 8 ? 'bg-green-600' : 'bg-slate-300'}`} />
@@ -261,7 +272,6 @@ function Register() {
                             </button>
                         </div>
 
-                        {/* Optional Footer Link */}
                         <div className="mt-8 text-center text-sm text-gray-600 form-anim opacity-0 origin-bottom">
                             Already have an account?{' '}
                             <Link to="/login" className="font-bold text-blue-600 hover:text-blue-500 transition-colors">

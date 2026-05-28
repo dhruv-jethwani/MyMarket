@@ -10,18 +10,23 @@ export default defineConfig({
       '/auth': {
         target: 'http://127.0.0.1:5000',
         changeOrigin: true,
-        secure: false,
+        secure: false
       },
 	  '/shop': {
         target: 'http://127.0.0.1:5000',
         changeOrigin: true,
-        secure: false,
+        secure: false
       },
 	  '/cart': {
         target: 'http://127.0.0.1:5000',
         changeOrigin: true,
-        secure: false,
+        secure: false
       },
+	  '/order': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+        secure: false
+	  }
       // You can add more prefixes here later, like '/api'
     }
   }

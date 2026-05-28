@@ -3,11 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import axios from 'axios'
 import { useForm } from 'react-hook-form'
-import { Eye, EyeSlash } from 'react-bootstrap-icons'
+import { Eye, EyeSlash, Check2Circle, XCircle } from 'react-bootstrap-icons'
 import { Link, useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
-
-// Standard V4 Import
 import { animate, stagger } from 'animejs';
 
 const loginSchema = z.object({
@@ -16,28 +14,34 @@ const loginSchema = z.object({
 })
 
 function Login() {
-	const navigate = useNavigate()
+    const navigate = useNavigate()
     const API = '/auth/login'
     const [showPassword, setShowPassword] = useState(false)
     const cardRef = useRef(null);
     const buttonRef = useRef(null);
     
+    // --- NEW TOAST STATE ---
+    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+    
     const { register, handleSubmit, formState: { errors }, reset } = useForm({
         resolver: zodResolver(loginSchema)
     })
 
+    const showToast = (message, type = 'error') => {
+        setToast({ visible: true, message, type });
+        setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
+    };
+
     // --- HIGH-END ANIMATION SEQUENCE ---
     useEffect(() => {
-        // 1. The Card: Slight scale up with a dynamic tilt
         animate(cardRef.current, {
             scale: [0.85, 1],
-            rotate: [-2, 0], // A tiny physical tilt on entry
+            rotate: [-2, 0],
             opacity: [0, 1],
             duration: 1200,
             easing: 'easeOutElastic(1, .8)'
         });
 
-        // 2. The Header: Drops down gracefully
         animate('.header-anim', {
             translateY: [-30, 0],
             opacity: [0, 1],
@@ -46,14 +50,13 @@ function Login() {
             easing: 'easeOutExpo'
         });
 
-        // 3. The Form: 3D "Unfolding" effect (Notice the rotateX)
         animate('.form-anim', {
             translateY: [40, 0],
-            rotateX: [-90, 0], // Starts flipped backwards and swings up
+            rotateX: [-90, 0],
             opacity: [0, 1],
             delay: stagger(150, { start: 500 }),
             duration: 1200,
-            easing: 'easeOutBack' // Gives it a slight "bounce" at the end
+            easing: 'easeOutBack'
         });
     }, []);
 
@@ -61,8 +64,8 @@ function Login() {
     const handleBtnHover = () => {
         animate(buttonRef.current, {
             scale: 1.04,
-            translateY: -4, // Physically lifts up
-            boxShadow: '0px 20px 25px -5px rgba(37, 99, 235, 0.4)', // Huge glowing shadow
+            translateY: -4,
+            boxShadow: '0px 20px 25px -5px rgba(37, 99, 235, 0.4)',
             duration: 500,
             easing: 'easeOutElastic(1, .6)'
         });
@@ -72,7 +75,7 @@ function Login() {
         animate(buttonRef.current, {
             scale: 1,
             translateY: 0,
-            boxShadow: '0px 10px 15px -3px rgba(37, 99, 235, 0.2)', // Back to normal shadow
+            boxShadow: '0px 10px 15px -3px rgba(37, 99, 235, 0.2)',
             duration: 400,
             easing: 'easeOutExpo'
         });
@@ -80,7 +83,6 @@ function Login() {
 
     const handleTogglePassword = () => {
         setShowPassword(!showPassword);
-        // Spin the eye icon every time it's clicked
         animate('.eye-icon', {
             rotate: [0, 360], 
             duration: 600,
@@ -92,24 +94,30 @@ function Login() {
         try {
             const res = await axios.post(API, data)
             const token = res.data.token; 
-			const decoded = jwtDecode(token)
+            const decoded = jwtDecode(token)
             localStorage.setItem('token', token)
-			localStorage.setItem('role', decoded.role)
+            localStorage.setItem('role', decoded.role)
             reset()
-			if (decoded.role == "customer"){
-				navigate('/store')
-			}
-			else if (decoded.role == "seller"){
-				navigate('/add_product')
-			}
-			else if (decoded.role == "admin"){
-				navigate('/admin/users')
-			}
-			else {
-				console.log("Invalid user role")
-			}
+            
+            // Generate the personalized welcome message
+            const welcomeMsg = `Welcome back, ${decoded.fullname || 'User'}!`;
+
+            // Redirect and inject the success message into the router state
+            if (decoded.role === "customer"){
+                navigate('/store', { state: { loginToast: welcomeMsg } })
+            }
+            else if (decoded.role === "seller"){
+                navigate('/add_product', { state: { loginToast: welcomeMsg } })
+            }
+            else if (decoded.role === "admin"){
+                navigate('/admin/users', { state: { loginToast: welcomeMsg } })
+            }
+            else {
+                console.log("Invalid user role")
+            }
         } catch (error) {
             console.log(error)
+            showToast(error.response?.data?.error || "Invalid credentials", "error");
         }
     }
 
@@ -119,13 +127,20 @@ function Login() {
 
     return (
         <div className="flex justify-center items-center min-h-[calc(100vh-144px)] overflow-hidden bg-gray-50">
+            
+            {/* NEW TOAST SYSTEM */}
+            {toast.visible && (
+                <div className={`fixed top-8 right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold transition-all duration-300 ${toast.type === 'success' ? 'bg-green-500 shadow-green-200' : 'bg-red-500 shadow-red-200'}`}>
+                    {toast.type === 'success' ? <Check2Circle size={24} /> : <XCircle size={24} />}
+                    {toast.message}
+                </div>
+            )}
+
             <div 
                 ref={cardRef}
-                /* Added perspective-1000 to the card so the 3D rotateX actually looks 3D */
                 className="w-full max-w-[420px] bg-white p-10 rounded-3xl shadow-2xl border border-gray-100 opacity-0"
                 style={{ perspective: '1000px' }} 
             >
-                {/* Header Group */}
                 <div className="header-anim opacity-0">
                     <h2 className="text-center text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h2>
                 </div>
@@ -134,7 +149,6 @@ function Login() {
                 </div>
                 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    {/* Input Group 1 */}
                     <div className="form-anim opacity-0 origin-bottom">
                         <label className={labelStyle}>Username</label>
                         <input 
@@ -145,7 +159,6 @@ function Login() {
                         {errors.username && <p className={errorStyle}>{errors.username.message}</p>}
                     </div>
 
-                    {/* Input Group 2 */}
                     <div className="form-anim opacity-0 origin-bottom">
                         <div className="flex justify-between items-center mt-6">
                             <label className="block text-sm font-semibold text-gray-700">Password</label>
@@ -171,7 +184,6 @@ function Login() {
                         {errors.password && <p className={errorStyle}>{errors.password.message}</p>}
                     </div>
 
-                    {/* Button Group */}
                     <div className="pt-8 form-anim opacity-0 origin-bottom">
                         <button 
                             ref={buttonRef}
@@ -185,7 +197,6 @@ function Login() {
                         </button>
                     </div>
 
-                    {/* Footer Group */}
                     <div className="mt-8 text-center text-sm text-gray-600 form-anim opacity-0 origin-bottom">
                         Don't have an account?{' '}
                         <Link to="/register" className="font-bold text-blue-600 hover:text-blue-500 transition-colors">

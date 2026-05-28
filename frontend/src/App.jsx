@@ -20,6 +20,8 @@ import ManageOrders from './components/seller/ManageOrders'
 import AllOrders from './components/admin/AllOrders'
 import UserControl from './components/admin/UserControl'
 import ProductDetail from './components/common/ProductDetail'
+import Checkout from './components/customer/Checkout'
+import SellerAnalytics from './components/seller/SellerAnalytics'
 
 function App() {
   return (
@@ -36,6 +38,7 @@ function App() {
           <Route path='/store' element={<Shop />} />
           <Route path='/items' element={<Cart />} />
           <Route path='/history' element={<OrderHistory />} />
+          <Route path='/checkout' element={<Checkout />} />
 		  <Route path='/product/:id' element={<ProductDetail />} />
 
         </Route>
@@ -47,6 +50,7 @@ function App() {
 			<Route path='/add_product' element={<AddProduct />} />
 			<Route path='/inventory' element={<ManageInventory />} />
 			<Route path='/manage_orders' element={<ManageOrders />} />
+			<Route path='/analytics' element={<SellerAnalytics />} />
 			{/* NEW: Seller can view product details */}
 			<Route path='/product/:id' element={<ProductDetail />} />
 		</Route>

@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode'; // <-- Added import
+import { jwtDecode } from 'jwt-decode'; 
 import { 
     Bag,           
     Cart3, 
     ClockHistory, 
     BoxArrowRight, 
-    PersonCircle
+    PersonCircle,
+    Check2Circle // <-- Added Icon
 } from 'react-bootstrap-icons';
 
 function CustomerLayout() {
     const location = useLocation();
     const navigate = useNavigate();
-    const [userName, setUserName] = useState('Shopper'); // <-- Added state
+    const [userName, setUserName] = useState('Shopper'); 
+    
+    // --- NEW CROSS-ROUTE TOAST STATE ---
+    const [globalToast, setGlobalToast] = useState({ visible: false, message: '' });
 
-    // Decode the token on load to get the name
     useEffect(() => {
+        // Decode Token for Name
         const token = localStorage.getItem('token');
         if (token) {
             try {
@@ -25,7 +29,20 @@ function CustomerLayout() {
                 console.error("Invalid token");
             }
         }
-    }, []);
+
+        // Check if we arrived here from a successful login
+        if (location.state && location.state.loginToast) {
+            setGlobalToast({ visible: true, message: location.state.loginToast });
+            
+            // Clean up the router state so refreshing the page doesn't re-trigger the toast
+            window.history.replaceState({}, document.title);
+
+            // Force it to persist for exactly 5 seconds
+            setTimeout(() => {
+                setGlobalToast({ visible: false, message: '' });
+            }, 5000); 
+        }
+    }, [location]);
 
     const menuItems = [
         { path: '/store', name: 'Shop', icon: <Bag size={20} /> },
@@ -40,7 +57,16 @@ function CustomerLayout() {
     };
 
     return (
-        <div className="flex h-screen bg-slate-50 overflow-hidden">
+        <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+            
+            {/* --- GLOBAL PERSISTENT TOAST --- */}
+            {globalToast.visible && (
+                <div className="fixed top-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold transition-all duration-300 bg-green-500 shadow-green-200">
+                    <Check2Circle size={24} />
+                    {globalToast.message}
+                </div>
+            )}
+
             {/* SIDEBAR */}
             <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm">
                 <div className="h-16 flex items-center px-6 border-b border-slate-100">
@@ -85,20 +111,14 @@ function CustomerLayout() {
 
             {/* MAIN CONTENT WRAPPER */}
             <div className="flex-1 flex flex-col">
-                {/* TOP HEADER */}
                 <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
                     <div className="flex items-center gap-2 text-slate-500 font-medium">
                         <Bag size={18} className="text-blue-500" />
                         <span>Customer Dashboard</span>
                     </div>
                     
-                    {/* CLICKABLE PROFILE LINK */}
-                    <Link 
-                        to="/profile" 
-                        className="flex items-center gap-3 hover:bg-slate-50 p-2 rounded-xl transition-colors cursor-pointer"
-                    >
+                    <Link to="/profile" className="flex items-center gap-3 hover:bg-slate-50 p-2 rounded-xl transition-colors cursor-pointer">
                         <div className="text-right hidden sm:block">
-                            {/* Dynamically displays the user's name */}
                             <p className="text-sm font-bold text-slate-700">{userName}</p>
                             <p className="text-xs text-slate-400">Active Session</p>
                         </div>
@@ -106,7 +126,6 @@ function CustomerLayout() {
                     </Link>
                 </header>
 
-                {/* PAGE CONTENT */}
                 <main className="flex-1 overflow-y-auto p-8">
                     <Outlet />
                 </main>

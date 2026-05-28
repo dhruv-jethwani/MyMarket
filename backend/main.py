@@ -8,7 +8,7 @@ load_dotenv()
 
 # 2. NOW IT IS SAFE TO IMPORT YOUR LOCAL MODULES
 from models import db
-from routes import auth_bp, shop_bp, cart_bp
+from routes import auth_bp, shop_bp, cart_bp, order_bp
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -21,6 +21,7 @@ db.init_app(app)
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(shop_bp, url_prefix='/shop')
 app.register_blueprint(cart_bp, url_prefix='/cart')
+app.register_blueprint(order_bp, url_prefix='/order')
 
 @app.route('/')
 def home():
