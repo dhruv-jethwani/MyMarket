@@ -47,8 +47,8 @@ export default function SellerLayout() {
     }, [location]);
 
     const menuItems = [
-        { path: '/add_product', name: 'Add Product', icon: <PlusCircle size={20} /> },
         { path: '/inventory', name: 'Manage Inventory', icon: <BoxSeam size={20} /> },
+        { path: '/add_product', name: 'Add Product', icon: <PlusCircle size={20} /> },
         { path: '/manage_orders', name: 'Seller Orders', icon: <CardList size={20} /> },
 		{ path: '/analytics', name: 'Analytics', icon: <GraphUp size={20} /> },
 		{ path: '/ledger', name: 'Financial Ledger', icon: <JournalText size={20} /> }

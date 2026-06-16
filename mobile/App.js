@@ -16,20 +16,23 @@ import RegisterScreen from './screens/RegisterScreen';
 
 // --- CUSTOMER SCREENS ---
 import ShopScreen from './screens/customer/ShopScreen';
-import CartScreen from './screens/customer/CartScreen';
-import OrderHistoryScreen from './screens/customer/OrderHistoryScreen';
+import CartScreen from './screens/customer/CartScreen'; // Implemented earlier
+import CheckoutScreen from './screens/customer/CheckoutScreen';
+import OrderHistoryScreen from './screens/customer/OrderHistoryScreen'; // Implemented earlier
 
 // --- SELLER SCREENS ---
 import AddProductScreen from './screens/seller/AddProductScreen';
 import ManageInventoryScreen from './screens/seller/ManageInventoryScreen';
-import ManageOrdersScreen from './screens/seller/ManageOrdersScreen';
-import SellerAnalyticsScreen from './screens/seller/SellerAnalyticsScreen';
+import EditProductScreen from './screens/seller/EditProductScreen';
+import ManageOrdersScreen from './screens/seller/ManageOrdersScreen'; // Implemented earlier
+import SellerAnalyticsScreen from './screens/seller/SellerAnalyticsScreen'; // Implemented earlier
 
 // --- COMMON SCREENS ---
 import ProfileScreen from './screens/common/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const SellerStack = createNativeStackNavigator();
 
 // ==========================================
 // 1. CUSTOMER INTERFACE
@@ -39,40 +42,42 @@ function CustomerTabs() {
     <Tab.Navigator
       initialRouteName="Store"
       screenOptions={({ route }) => ({
-        headerShown: true,
+        headerShown: false, // We usually build custom headers in the screens themselves
         tabBarActiveTintColor: '#2563eb',
         tabBarInactiveTintColor: '#94a3b8',
-        tabBarStyle: { paddingBottom: 5, paddingTop: 5, height: 60 },
+        tabBarStyle: { paddingBottom: 5, paddingTop: 5, height: 60, borderTopColor: '#f1f5f9' },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
           if (route.name === 'Store') iconName = focused ? 'storefront' : 'storefront-outline';
           else if (route.name === 'Cart') iconName = focused ? 'cart' : 'cart-outline';
           else if (route.name === 'History') iconName = focused ? 'receipt' : 'receipt-outline';
+          else if (route.name === 'Checkout') iconName = focused ? 'card' : 'card-outline';
           else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Store" component={ShopScreen} options={{ title: 'MyMarket' }} />
+      <Tab.Screen name="Store" component={ShopScreen} />
       <Tab.Screen name="Cart" component={CartScreen} />
-      <Tab.Screen name="History" component={OrderHistoryScreen} options={{ title: 'My Orders' }} />
+      <Tab.Screen name="Checkout" component={CheckoutScreen} />
+      <Tab.Screen name="History" component={OrderHistoryScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
 
 // ==========================================
-// 2. SELLER INTERFACE
+// 2. SELLER INTERFACE (Nested Stack for Edit)
 // ==========================================
-function SellerTabs() {
+function SellerTabNavigator() {
   return (
     <Tab.Navigator
-      initialRouteName="Inventory" // Forces Inventory to be the Home screen for Sellers
+      initialRouteName="Inventory"
       screenOptions={({ route }) => ({
-        headerShown: true,
-        tabBarActiveTintColor: '#059669', // Distinctive green theme for sellers
+        headerShown: false,
+        tabBarActiveTintColor: '#059669',
         tabBarInactiveTintColor: '#94a3b8',
-        tabBarStyle: { paddingBottom: 5, paddingTop: 5, height: 60 },
+        tabBarStyle: { paddingBottom: 5, paddingTop: 5, height: 60, borderTopColor: '#f1f5f9' },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
           if (route.name === 'Inventory') iconName = focused ? 'cube' : 'cube-outline';
@@ -93,6 +98,16 @@ function SellerTabs() {
   );
 }
 
+// We wrap the SellerTabs in a stack so the EditProductScreen can slide over it
+function SellerInterface() {
+  return (
+    <SellerStack.Navigator screenOptions={{ headerShown: false }}>
+      <SellerStack.Screen name="SellerMainTabs" component={SellerTabNavigator} />
+      <SellerStack.Screen name="EditProduct" component={EditProductScreen} options={{ presentation: 'modal' }} />
+    </SellerStack.Navigator>
+  );
+}
+
 // ==========================================
 // 3. MASTER ROUTER
 // ==========================================
@@ -108,9 +123,8 @@ export default function App() {
           return;
         }
 
-        // Decode token to find role
         const decoded = jwtDecode(token);
-        const userRole = decoded?.sub?.role || decoded?.role || 'customer'; // Adjust based on your Flask JWT payload
+        const userRole = decoded?.sub?.role || decoded?.role || 'customer';
 
         if (userRole === 'seller' || userRole === 'manager') {
           setInitialRoute('SellerTabs');
@@ -118,7 +132,6 @@ export default function App() {
           setInitialRoute('CustomerTabs');
         }
       } catch (e) {
-        // If token is invalid or expired
         await AsyncStorage.removeItem('token');
         setInitialRoute('Home');
       }
@@ -146,7 +159,7 @@ export default function App() {
           
           {/* PROTECTED ROUTES */}
           <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
-          <Stack.Screen name="SellerTabs" component={SellerTabs} />
+          <Stack.Screen name="SellerTabs" component={SellerInterface} />
         </Stack.Navigator>
       </NavigationContainer>
       

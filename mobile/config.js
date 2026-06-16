@@ -1,5 +1,5 @@
 // Remember to use your actual local IPv4 address, e.g., 'http://192.168.1.5:5000'
-const BASE_URL = 'http://192.168.31.88:5000'; 
+const BASE_URL = 'https://mymarket-sbu-vn93.arcada.app'; 
 
 export const API_ROUTES = {
   // Auth
