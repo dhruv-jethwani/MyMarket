@@ -138,7 +138,9 @@ def seller_products():
     data = request.get_json()
     seller_id = data.get("seller_id")
     products = get_product_by_seller_id(sellerid=seller_id)
-    serialized = [serialize_product(p) for p in products]
+
+    # This ensures raw DB objects transform into pure serializable JSON dictionaries
+    serialized = [serialize_product(p) for p in products] 
     return jsonify({"message": "Products retrieved successfully", "products": serialized}), 200
 
 # --- NEW: ADD STOCK ROUTE ---
