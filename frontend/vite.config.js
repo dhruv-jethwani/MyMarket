@@ -1,33 +1,24 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    proxy: {
-      '/auth': {
-        target: 'http://127.0.0.1:5000',
-        changeOrigin: true,
-        secure: false
-      },
-	  '/shop': {
-        target: 'http://127.0.0.1:5000',
-        changeOrigin: true,
-        secure: false
-      },
-	  '/cart': {
-        target: 'http://127.0.0.1:5000',
-        changeOrigin: true,
-        secure: false
-      },
-	  '/order': {
-        target: 'http://127.0.0.1:5000',
-        changeOrigin: true,
-        secure: false
-	  }
-      // You can add more prefixes here later, like '/api'
+export default defineConfig(({ mode }) => {
+  // Load env file based on `mode` in the current working directory.
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
+    plugins: [react(), tailwindcss()],
+    server: {
+      proxy: {
+        // CATCH-ALL PROXY RULE: Seamlessly routes any API request during local testing
+        // Matches /auth, /shop, /cart, /order automatically
+        '^/(auth|shop|cart|order)': {
+          target: env.VITE_API_URL || 'http://127.0.0.1:5000',
+          changeOrigin: true,
+          secure: false
+        }
+      }
     }
   }
 })
