@@ -49,8 +49,6 @@ function AddProduct() {
         name: "specifications"
     });
 
-    const addProductPath = '/shop/product'
-
     // --- NEW TOAST FUNCTION ---
     const showToast = (message, type = 'success') => {
         setToast({ visible: true, message, type });
