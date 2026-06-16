@@ -15,9 +15,12 @@ app = Flask(__name__)
 # Ensure Serverless CORS handles the cross-origin pre-flights properly
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
-# Bind the Mongo URI securely from your Vercel Dashboard Environment Variables
+# CRITICAL SERVERLESS FIX: Manage connection pooling and lazy-connecting
 app.config['MONGODB_SETTINGS'] = {
-    'host': os.environ.get('MONGO_URI')
+    'host': os.environ.get('MONGO_URI'),
+    'connect': False,       # Delays connection until the first query is made (Crucial for Serverless cold starts)
+    'maxPoolSize': 1,       # Prevents Vercel from exhausting your MongoDB connection limit
+    'serverSelectionTimeoutMS': 5000
 }
 
 # Initialize the Flask-MongoEngine instance under the application context
@@ -34,7 +37,8 @@ def home():
     return {
         "status": "online",
         "message": "Welcome to the MyMarket API",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "environment": "Serverless"
     }, 200
 
 # Vercel bypasses this block completely, using the 'app' export object above instead.
