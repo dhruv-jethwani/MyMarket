@@ -150,3 +150,98 @@ def get_seller_analytics_data(seller_id):
         "overall_margin": round(overall_margin, 2),
         "chart_data": chart_data
     }
+
+# --- ADMIN QUERIES ---
+def get_all_global_orders():
+    return Order.objects().order_by('-timestamp')
+
+# --- ADMIN FINANCIAL DASHBOARD (SNAPSHOT) ---
+def get_admin_dashboard_stats():
+    """Calculates high-level metrics: Budget, ROI, EVM and Margins."""
+    orders = Order.objects().order_by('-timestamp')
+    total_revenue, total_cost = 0, 0
+    
+    # Calculate global revenue and costs
+    for order in orders:
+        for item in order.items:
+            total_revenue += (item.price_at_purchase * item.quantity)
+            total_cost += (item.cost_price_at_purchase * item.quantity)
+            
+    total_profit = total_revenue - total_cost
+    roi = ((total_profit / total_cost) * 100) if total_cost > 0 else 0
+    margin = ((total_profit / total_revenue) * 100) if total_revenue > 0 else 0
+    
+    # Mock Enterprise Budgets (For UI Demonstration)
+    target_budget = 500000 
+    budget_variance = total_revenue - target_budget
+
+    # EVM Metrics (Earned Value Management)
+    planned_value = target_budget * 0.8 # 80% expected completion
+    earned_value = total_revenue
+    actual_cost = total_cost
+    cpi = (earned_value / actual_cost) if actual_cost > 0 else 1 # Cost Performance Index
+
+    return {
+        "revenue": total_revenue,
+        "costs": total_cost,
+        "profit": total_profit,
+        "margin": round(margin, 2),
+        "roi": round(roi, 2),
+        "target_budget": target_budget,
+        "budget_variance": budget_variance,
+        "evm": {
+            "pv": planned_value,
+            "ev": earned_value,
+            "ac": actual_cost,
+            "cpi": round(cpi, 2)
+        }
+    }
+
+# --- ADMIN ANALYTICS (DEEP DIVE) ---
+def get_admin_analytics_stats():
+    """Calculates granular data: Forecasting, Segments, and extracts logs."""
+    orders = list(Order.objects().order_by('timestamp'))
+    
+    # 1. Product Segment Success
+    product_sales = {}
+    daily_revenue = {}
+    
+    for order in orders:
+        date_str = order.timestamp.strftime('%b %d')
+        if date_str not in daily_revenue:
+            daily_revenue[date_str] = 0
+            
+        for item in order.items:
+            rev = item.price_at_purchase * item.quantity
+            daily_revenue[date_str] += rev
+            
+            if item.name not in product_sales:
+                product_sales[item.name] = {"revenue": 0, "qty": 0}
+            product_sales[item.name]["revenue"] += rev
+            product_sales[item.name]["qty"] += item.quantity
+
+    # Sort segments by top 5 revenue generators
+    top_segments = sorted([{"name": k, "revenue": v["revenue"], "qty": v["qty"]} for k, v in product_sales.items()], key=lambda x: x["revenue"], reverse=True)[:5]
+    
+    # 2. Performance Forecasting (Simple Linear Projection based on last 7 days)
+    chart_data = [{"date": k, "revenue": v} for k, v in daily_revenue.items()][-14:] # Last 14 active days
+    
+    # 3. Generate Audit/Activity Logs from real recent events
+    from models.users import User
+    recent_users = User.objects().order_by('-id')[:5]
+    recent_orders = Order.objects().order_by('-timestamp')[:5]
+    
+    audit_logs = []
+    for u in recent_users:
+        audit_logs.append({"timestamp": u.id.generation_time.isoformat(), "action": f"New {u.role.upper()} registered", "entity": u.username, "type": "auth"})
+    for o in recent_orders:
+        buyer = getattr(o.user, 'username', 'Unknown') if o.user else 'Unknown'
+        audit_logs.append({"timestamp": o.timestamp.isoformat(), "action": f"Order {o.status}", "entity": f"Order {str(o.id)[-6:]} by {buyer}", "type": "system"})
+        
+    audit_logs.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    return {
+        "top_segments": top_segments,
+        "timeline": chart_data,
+        "audit_logs": audit_logs[:10] # Top 10 recent activities
+    }

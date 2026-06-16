@@ -15,7 +15,7 @@ function ManageInventory() {
     const [editingProductId, setEditingProductId] = useState(null);
     
     // --- RESTOCK STATE ---
-    const [restockProduct, setRestockProduct] = useState(null); // Holds product object being restocked
+    const [restockProduct, setRestockProduct] = useState(null);
     const [restockQty, setRestockQty] = useState('');
     const [isRestocking, setIsRestocking] = useState(false);
 
@@ -58,7 +58,6 @@ function ManageInventory() {
             const pid = restockProduct._id.$oid || restockProduct._id;
             await axios.patch(`/shop/product/${pid}/restock`, { quantity: parseInt(restockQty) });
             
-            // Instantly update UI stock
             setProducts(products.map(p => {
                 if ((p._id.$oid || p._id) === pid) {
                     return { ...p, stock_quantity: p.stock_quantity + parseInt(restockQty) };
@@ -169,7 +168,8 @@ function ManageInventory() {
                         const productId = product._id.$oid || product._id;
                         return (
                             <div key={productId} className="inventory-card opacity-0 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col">
-                                <Link to={`/product/${productId}`} className="block h-48 bg-slate-100 overflow-hidden relative cursor-pointer group">
+                                {/* FIX 1: PREFIXED ROUTE */}
+                                <Link to={`/seller/product/${productId}`} className="block h-48 bg-slate-100 overflow-hidden relative cursor-pointer group">
                                     <img src={product.image_url} alt={product.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; }} />
                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded-md text-slate-700 shadow-sm uppercase tracking-wide">
                                         {product.category}
@@ -177,7 +177,8 @@ function ManageInventory() {
                                 </Link>
 
                                 <div className="p-5 flex-1 flex flex-col">
-                                    <Link to={`/product/${productId}`} className="hover:text-blue-600 transition-colors">
+                                    {/* FIX 2: PREFIXED ROUTE */}
+                                    <Link to={`/seller/product/${productId}`} className="hover:text-blue-600 transition-colors">
                                         <h3 className="text-lg font-bold text-slate-900 line-clamp-1">{product.name}</h3>
                                     </Link>
                                     <p className="text-sm text-slate-500 mt-1 line-clamp-2 mb-4 flex-1">{product.description}</p>

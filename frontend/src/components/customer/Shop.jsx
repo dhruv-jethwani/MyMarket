@@ -11,35 +11,29 @@ function Shop() {
     const CART_API = '/cart/get_cart';
     const navigate = useNavigate();
     
-    // --- STATE ---
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // FILTERS STATE
+
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
-    
-    // LOCAL CART STAGING & BASELINE
-    const [localCart, setLocalCart] = useState({});
-    const [dbCartState, setDbCartState] = useState({}); // NEW: Tracks the original DB state
 
-    // --- FETCH DATA (PRODUCTS & EXISTING CART) ---
+    const [localCart, setLocalCart] = useState({});
+    const [dbCartState, setDbCartState] = useState({});
+
     useEffect(() => {
         const loadStoreData = async () => {
             setIsLoading(true);
             try {
-                // 1. Fetch Products
                 const prodRes = await axios.get(API_PRODUCTS);
                 if (prodRes.data && prodRes.data.products) {
                     setProducts(prodRes.data.products);
                 }
 
-                // 2. Fetch Cart (If user is logged in)
                 const currentToken = localStorage.getItem('token');
                 if (currentToken) {
                     const cartRes = await axios.get(CART_API, {
@@ -49,7 +43,6 @@ function Shop() {
                     if (cartRes.data && cartRes.data.cart) {
                         setCart(cartRes.data.cart);
                         
-                        // Populate local staging cart so UI instantly reflects database cart
                         if (cartRes.data.cart.items) {
                             const existingCart = {};
                             cartRes.data.cart.items.forEach(item => {
@@ -59,7 +52,7 @@ function Shop() {
                                 }
                             });
                             setLocalCart(existingCart);
-                            setDbCartState(existingCart); // Set the baseline
+                            setDbCartState(existingCart); 
                         }
                     }
                 }
@@ -73,7 +66,6 @@ function Shop() {
         loadStoreData();
     }, []);
 
-    // --- ENTRANCE ANIMATIONS ---
     useEffect(() => {
         if (!isLoading && products.length > 0) {
             animate('.product-card', {
@@ -98,9 +90,8 @@ function Shop() {
         setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
     };
 
-    // --- LOCAL CART LOGIC ---
     const handleAddLocal = (productId, stockQuantity, e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         e.stopPropagation();
 
         setLocalCart(prev => {
@@ -116,7 +107,6 @@ function Shop() {
     const handleRemoveLocal = (productId, e) => {
         e.preventDefault();
         e.stopPropagation();
-
         setLocalCart(prev => {
             if (!prev[productId]) return prev;
             
@@ -146,12 +136,9 @@ function Shop() {
                 user: userId,
                 items: localCart
             };
-
             await axios.post(API_CART, payload);
             showToast("Cart updated successfully!", "success");
-            
-            // Update the baseline so the footer accurately reflects the new saved state
-            setDbCartState({...localCart}); 
+            setDbCartState({...localCart});
         } catch (error) {
             console.error(error);
             showToast("Failed to save cart.", "error");
@@ -160,7 +147,6 @@ function Shop() {
         }
     };
 
-    // --- DERIVED DATA & FILTERS ---
     const uniqueCategories = useMemo(() => {
         const categories = products.map(p => p.category);
         return ['All', ...new Set(categories)];
@@ -194,7 +180,6 @@ function Shop() {
         return { totalItems: items, totalPrice: price.toFixed(2) };
     }, [localCart, products]);
 
-    // NEW LOGIC: Show footer if there are items OR if the local cart differs from the DB cart
     const hasStagedItems = Object.keys(localCart).length > 0;
     const hasUnsavedChanges = JSON.stringify(localCart) !== JSON.stringify(dbCartState);
     const showFooter = hasStagedItems || hasUnsavedChanges;
@@ -210,7 +195,6 @@ function Shop() {
     return (
         <div className={`max-w-7xl mx-auto relative ${showFooter ? 'pb-32' : 'pb-8'}`}>
             
-            {/* TOAST NOTIFICATION */}
             {toast.visible && (
                 <div className={`fixed top-8 right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold transition-all duration-300 ${toast.type === 'success' ? 'bg-green-500 shadow-green-200' : 'bg-red-500 shadow-red-200'}`}>
                     {toast.type === 'success' ? <Check2Circle size={24} /> : <XCircle size={24} />}
@@ -218,13 +202,11 @@ function Shop() {
                 </div>
             )}
 
-            {/* HEADER */}
             <div className="mb-6">
                 <h2 className="text-3xl font-black text-slate-900">Market</h2>
                 <p className="text-slate-500 mt-1">Discover our latest products and deals.</p>
             </div>
 
-            {/* FILTER PANEL */}
             <div className="filter-panel opacity-0 bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col lg:flex-row gap-4 items-center">
                 <div className="relative w-full lg:flex-1">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -279,7 +261,6 @@ function Shop() {
                 </div>
             </div>
 
-            {/* PRODUCT GRID */}
             {filteredProducts.length === 0 ? (
                 <div className="bg-white border border-slate-200 border-dashed rounded-3xl p-12 text-center mt-8">
                     <Search size={48} className="mx-auto text-slate-300 mb-4" />
@@ -301,14 +282,14 @@ function Shop() {
                         return (
                             <div key={productId} className="product-card opacity-0 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group relative">
                                 
-                                {/* Badge clearly shows items currently in cart */}
                                 {qtyInCart > 0 && (
                                     <div className="absolute top-4 right-4 z-10 bg-blue-600 text-white text-xs font-black h-8 w-8 flex items-center justify-center rounded-full shadow-lg shadow-blue-200">
                                         {qtyInCart}
                                     </div>
                                 )}
 
-                                <Link to={`/product/${productId}`} className="block h-48 bg-slate-50 overflow-hidden relative cursor-pointer p-4 flex items-center justify-center">
+                                {/* FIX 3: PREFIXED ROUTE */}
+                                <Link to={`/store/product/${productId}`} className="block h-48 bg-slate-50 overflow-hidden relative cursor-pointer p-4 flex items-center justify-center">
                                     <img 
                                         src={product.image_url} 
                                         alt={product.name} 
@@ -318,6 +299,7 @@ function Shop() {
                                     <div className="absolute top-4 left-4 bg-white/90 backdrop-blur text-[10px] font-black px-2.5 py-1 rounded-md text-blue-600 shadow-sm uppercase tracking-wider border border-blue-100">
                                         {product.category}
                                     </div>
+                                    
                                     {product.stock_quantity === 0 && (
                                         <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
                                             <span className="bg-red-500 text-white font-black px-3 py-1 rounded-md text-xs uppercase tracking-wider shadow-sm">
@@ -329,7 +311,8 @@ function Shop() {
 
                                 <div className="p-5 flex-1 flex flex-col justify-between border-t border-slate-50">
                                     <div className="mb-4 text-center">
-                                        <Link to={`/product/${productId}`} className="hover:text-blue-600 transition-colors">
+                                        {/* FIX 4: PREFIXED ROUTE */}
+                                        <Link to={`/store/product/${productId}`} className="hover:text-blue-600 transition-colors">
                                             <h3 className="text-sm font-black text-slate-900 line-clamp-2">{product.name}</h3>
                                         </Link>
                                         <div className="mt-1">
@@ -368,7 +351,6 @@ function Shop() {
                 </div>
             )}
 
-            {/* --- STRICTLY CONDITIONAL FOOTER --- */}
             {showFooter && (
                 <div className="fixed bottom-0 left-0 md:left-64 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] py-4 px-6 md:px-12 z-50 flex flex-col sm:flex-row items-center justify-between animate-[slideUp_0.4s_ease-out_forwards]">
                     <div className="text-center sm:text-left mb-4 sm:mb-0">

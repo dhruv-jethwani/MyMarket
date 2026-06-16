@@ -43,3 +43,22 @@ def verify_password(user, password):
 	if not user:
 		return False
 	return check_password_hash(user.password, password)
+
+# --- ADMIN QUERIES ---
+def get_all_users():
+    return User.objects().exclude('password').order_by('-id')
+
+def update_user_role(user_id, new_role):
+    user = User.objects(id=user_id).first()
+    if user:
+        user.role = new_role
+        user.save()
+        return True
+    return False
+
+def delete_user(user_id):
+    user = User.objects(id=user_id).first()
+    if user:
+        user.delete()
+        return True
+    return False

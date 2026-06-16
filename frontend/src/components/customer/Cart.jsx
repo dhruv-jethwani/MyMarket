@@ -7,8 +7,7 @@ import { Trash, BoxSeam, CartX, ArrowLeft, ShieldCheck, BagCheck } from 'react-b
 
 function Cart() {
     const CART_API = '/cart/get_cart';
-    // FIXED: Corrected the endpoint to match your Flask backend
-    const DELETE_API = '/cart/delete_item'; 
+    const DELETE_API = '/cart/delete_item';
     const navigate = useNavigate();
 
     const [cart, setCart] = useState(null);
@@ -19,7 +18,6 @@ function Cart() {
     const decoded = token ? jwtDecode(token) : null;
     const userid = decoded?.user_id || '';
 
-    // --- FETCH CART ---
     useEffect(() => {
         const fetchCart = async () => {
             if (!token) {
@@ -42,7 +40,6 @@ function Cart() {
         fetchCart();
     }, [token, navigate]);
 
-    // --- ANIMATIONS ---
     useEffect(() => {
         if (!isLoading && cart?.items?.length > 0) {
             animate('.cart-item', {
@@ -62,10 +59,8 @@ function Cart() {
         }
     }, [isLoading, cart]);
 
-    // --- REMOVE ITEM (With Optimistic UI Update) ---
     const handleRemoveItem = async (productId) => {
         setIsRemoving(productId);
-        
         try {
             await axios.delete(DELETE_API, {
                 data: {
@@ -74,7 +69,6 @@ function Cart() {
                 }
             });
 
-            // Instantly update the UI without waiting for a full page refresh
             setCart(prev => ({
                 ...prev,
                 items: prev.items.filter(item => {
@@ -90,7 +84,6 @@ function Cart() {
         }
     };
 
-    // --- CALCULATE TOTALS ---
     const { subtotal, totalItems } = useMemo(() => {
         if (!cart?.items) return { subtotal: 0, totalItems: 0 };
         
@@ -113,7 +106,6 @@ function Cart() {
         );
     }
 
-    // --- EMPTY STATE ---
     if (!cart?.items || cart.items.length === 0) {
         return (
             <div className="max-w-3xl mx-auto mt-12 bg-white border border-slate-200 border-dashed rounded-3xl p-16 text-center shadow-sm">
@@ -130,7 +122,6 @@ function Cart() {
         );
     }
 
-    // --- FILLED CART STATE ---
     return (
         <div className="max-w-6xl mx-auto">
             
@@ -140,8 +131,6 @@ function Cart() {
             </div>
 
             <div className="flex flex-col lg:flex-row gap-8">
-                
-                {/* LEFT COLUMN: Item List */}
                 <div className="flex-1 space-y-4">
                     {cart.items.map((item, index) => {
                         const productId = item.product?._id?.$oid || item.product?.$oid || item.product?.id || index;
@@ -154,8 +143,8 @@ function Cart() {
                                 key={productId} 
                                 className={`cart-item opacity-0 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-6 transition-all duration-300 ${isBeingRemoved ? 'scale-95 opacity-50 blur-[2px]' : 'hover:shadow-md'}`}
                             >
-                                {/* Product Image */}
-                                <Link to={`/product/${productId}`} className="h-28 w-28 bg-slate-50 rounded-2xl p-2 flex-shrink-0 border border-slate-100">
+                                {/* FIX 5: PREFIXED ROUTE */}
+                                <Link to={`/store/product/${productId}`} className="h-28 w-28 bg-slate-50 rounded-2xl p-2 flex-shrink-0 border border-slate-100">
                                     {product.image_url ? (
                                         <img src={product.image_url} alt={product.name} className="w-full h-full object-contain drop-shadow-sm" />
                                     ) : (
@@ -163,9 +152,9 @@ function Cart() {
                                     )}
                                 </Link>
 
-                                {/* Product Details */}
                                 <div className="flex-1 text-center sm:text-left w-full">
-                                    <Link to={`/product/${productId}`} className="hover:text-blue-600 transition-colors">
+                                    {/* FIX 6: PREFIXED ROUTE */}
+                                    <Link to={`/store/product/${productId}`} className="hover:text-blue-600 transition-colors">
                                         <h3 className="text-lg font-bold text-slate-900 line-clamp-2 leading-tight mb-1">
                                             {product.name || "Unknown Product"}
                                         </h3>
@@ -179,7 +168,6 @@ function Cart() {
                                     </div>
                                 </div>
 
-                                {/* Item Total & Remove Action */}
                                 <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center gap-4 w-full sm:w-auto border-t sm:border-t-0 border-slate-100 pt-4 sm:pt-0">
                                     <div className="text-right hidden sm:block">
                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Subtotal</p>
@@ -199,7 +187,6 @@ function Cart() {
                     })}
                 </div>
 
-                {/* RIGHT COLUMN: Order Summary (Sticky) */}
                 <div className="w-full lg:w-96 lg:sticky top-8 self-start">
                     <div className="summary-box opacity-0 bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
                         <h3 className="text-xl font-black text-slate-900 mb-6 border-b border-slate-100 pb-4">Order Summary</h3>

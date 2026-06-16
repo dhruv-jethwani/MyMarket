@@ -1,6 +1,6 @@
 from . import auth_bp
 from flask import request, jsonify
-from models.users import User, Address, create_user, get_user_by_username, verify_password
+from models.users import User, Address, create_user, get_user_by_username, verify_password, get_all_users, update_user_role, delete_user
 from werkzeug.security import generate_password_hash
 import jwt
 import time
@@ -102,4 +102,69 @@ def update_user_profile(user_id):
         
     except Exception as e:
         print(f"Error updating profile: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@auth_bp.route('/admin/users', methods=['GET'])
+def admin_get_users():
+    try:
+        users = get_all_users()
+        user_list = [{"id": str(u.id), "fullname": u.fullname, "username": u.username, "email": u.email, "role": u.role} for u in users]
+        return jsonify({"users": user_list}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@auth_bp.route('/admin/users/<user_id>', methods=['PATCH', 'DELETE'])
+def admin_manage_user(user_id):
+    try:
+        if request.method == 'PATCH':
+            new_role = request.json.get('role')
+            if update_user_role(user_id, new_role):
+                return jsonify({"message": "Role updated successfully"}), 200
+            return jsonify({"error": "User not found"}), 404
+            
+        elif request.method == 'DELETE':
+            if delete_user(user_id):
+                return jsonify({"message": "User deleted successfully"}), 200
+            return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@auth_bp.route('/admin/users', methods=['GET'])
+def admin_get_users():
+    try:
+        users = get_all_users()
+        user_list = [{"id": str(u.id), "fullname": u.fullname, "username": u.username, "email": u.email, "role": u.role, "joined": u.id.generation_time.isoformat()} for u in users]
+        return jsonify({"users": user_list}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@auth_bp.route('/admin/users/<target_id>', methods=['PATCH', 'DELETE'])
+def admin_manage_user(target_id):
+    try:
+        # Decode token to get current requester ID
+        auth_header = request.headers.get('Authorization')
+        token = auth_header.split(" ")[1]
+        decoded = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=["HS256"])
+        requester_id = decoded.get('user_id')
+
+        if request.method == 'PATCH':
+            new_role = request.json.get('role')
+            # Security Block: Prevent Self-Demotion
+            if str(target_id) == str(requester_id):
+                return jsonify({"error": "Action Denied: You cannot demote your own administrator account."}), 403
+                
+            if update_user_role(target_id, new_role):
+                return jsonify({"message": "Role updated successfully"}), 200
+            return jsonify({"error": "User not found"}), 404
+            
+        elif request.method == 'DELETE':
+            # Security Block: Prevent Self-Deletion
+            if str(target_id) == str(requester_id):
+                return jsonify({"error": "Action Denied: You cannot delete your own active session."}), 403
+                
+            if delete_user(target_id):
+                return jsonify({"message": "User deleted successfully"}), 200
+            return jsonify({"error": "User not found"}), 404
+            
+    except Exception as e:
         return jsonify({"error": str(e)}), 500

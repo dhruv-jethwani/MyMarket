@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { animate, stagger } from 'animejs';
-import { Receipt, BoxSeam, CheckCircleFill, ClockFill, Truck, Check2All } from 'react-bootstrap-icons';
+import { Receipt, BoxSeam, CheckCircleFill, ClockFill, Truck, Check2All, Download } from 'react-bootstrap-icons';
 
 function OrderHistory() {
     const HISTORY_API = '/order/history';
@@ -53,6 +53,50 @@ function OrderHistory() {
             case 'Delivered': return <Check2All className="text-emerald-600" />;
             default: return <ClockFill className="text-orange-500" />;
         }
+    };
+
+    // --- NEW: INVOICE GENERATOR LOGIC ---
+    const handleDownloadInvoice = (order) => {
+        const orderDate = new Date(order.timestamp).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        // Construct a beautifully formatted plain-text receipt
+        let invoiceContent = `=================================================\n`;
+        invoiceContent += `                 MYMARKET INVOICE                \n`;
+        invoiceContent += `=================================================\n\n`;
+        invoiceContent += `Order Ref ID: ${order.id}\n`;
+        invoiceContent += `Date Placed:  ${orderDate}\n`;
+        invoiceContent += `Status:       ${order.status}\n`;
+        invoiceContent += `Gateway Ref:  ${order.gateway_ref || 'N/A'}\n\n`;
+        invoiceContent += `-------------------------------------------------\n`;
+        invoiceContent += `ITEM                               QTY    PRICE  \n`;
+        invoiceContent += `-------------------------------------------------\n`;
+
+        order.items.forEach(item => {
+            // Truncate long names and pad them nicely for fixed-width alignment
+            let name = item.name.length > 30 ? item.name.substring(0, 27) + '...' : item.name;
+            name = name.padEnd(32, ' ');
+            let qty = item.quantity.toString().padEnd(5, ' ');
+            let price = `₹${(item.price * item.quantity).toFixed(2)}`;
+            invoiceContent += `${name}${qty}  ${price}\n`;
+        });
+
+        invoiceContent += `-------------------------------------------------\n`;
+        invoiceContent += `GRAND TOTAL:                              ₹${order.total_amount.toFixed(2)}\n`;
+        invoiceContent += `=================================================\n`;
+        invoiceContent += `     Thank you for shopping with MyMarket!       \n`;
+
+        // Create a hidden Blob element in the browser and trigger the native download
+        const blob = new Blob([invoiceContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `MyMarket_Invoice_${order.id}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
 
     if (isLoading) {
@@ -136,10 +180,15 @@ function OrderHistory() {
                                 </div>
                             </div>
                             
-                            {/* Gateway Ref */}
+                            {/* Gateway Ref & Download Action */}
                             <div className="bg-slate-50 p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
                                 <span>Ref: {order.gateway_ref || 'N/A'}</span>
-                                <span className="text-blue-500 hover:text-blue-700 cursor-pointer transition-colors">Download Invoice</span>
+                                <button 
+                                    onClick={() => handleDownloadInvoice(order)}
+                                    className="flex items-center gap-1.5 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                                >
+                                    <Download size={14} /> Download Invoice
+                                </button>
                             </div>
                         </div>
                     );

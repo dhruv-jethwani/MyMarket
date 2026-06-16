@@ -1,6 +1,6 @@
 from . import order_bp
 from flask import request, jsonify
-from models.orders import process_checkout, Order, get_seller_orders, get_seller_analytics_data, update_order_status
+from models.orders import process_checkout, Order, get_seller_orders, update_order_status, get_all_global_orders, get_admin_analytics_stats, get_admin_dashboard_stats, get_seller_analytics_data
 from models.cart import clear_cart
 import jwt
 import os
@@ -106,5 +106,40 @@ def seller_analytics_route():
         
         analytics = get_seller_analytics_data(seller_id)
         return jsonify(analytics), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@order_bp.route('/admin/all', methods=['GET'])
+def admin_get_all_orders():
+    try:
+        orders = get_all_global_orders()
+        orders_data = []
+        for order in orders:
+            buyer_name = getattr(order.user, 'fullname', getattr(order.user, 'username', 'Unknown')) if order.user else 'Unknown'
+            orders_data.append({
+                "id": str(order.id),
+                "timestamp": order.timestamp.isoformat(),
+                "status": order.status,
+                "buyer_name": buyer_name,
+                "total_amount": order.total_amount,
+                "gateway_ref": order.gateway_ref
+            })
+        return jsonify({"orders": orders_data}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@order_bp.route('/admin/dashboard', methods=['GET'])
+def admin_dashboard_route():
+    try:
+        stats = get_admin_dashboard_stats()
+        return jsonify(stats), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@order_bp.route('/admin/analytics', methods=['GET'])
+def admin_analytics_route():
+    try:
+        stats = get_admin_analytics_stats()
+        return jsonify(stats), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
