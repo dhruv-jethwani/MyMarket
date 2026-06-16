@@ -32,7 +32,9 @@ function ManageInventory() {
         setIsLoading(true);
         try {
             const res = await API.post(manageSellerPath, { seller_id: uId });
-            if (res.data && res.data.products) setProducts(res.data.products);
+            if (res.data && res.data.products) {
+				setProducts(res.data.products);
+				}
         } catch (error) {
             console.error("Failed to fetch products:", error);
         } finally {
