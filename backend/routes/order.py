@@ -64,7 +64,6 @@ def seller_orders_route():
         for order in orders:
             seller_items = [{"name": i.name, "price": i.price_at_purchase, "quantity": i.quantity} for i in order.items if i.seller_id == seller_id]
             if seller_items:
-                # NEW: Safely extract the buyer's name from the ReferenceField
                 buyer_name = "Unknown Customer"
                 if order.user:
                     buyer_name = getattr(order.user, 'fullname', getattr(order.user, 'username', 'Unknown Customer'))
@@ -73,7 +72,7 @@ def seller_orders_route():
                     "id": str(order.id),
                     "timestamp": order.timestamp.isoformat(),
                     "status": order.status,
-                    "buyer_name": buyer_name, # Added to response
+                    "buyer_name": buyer_name,
                     "items": seller_items,
                     "order_total": sum(i['price'] * i['quantity'] for i in seller_items)
                 })
@@ -108,6 +107,8 @@ def seller_analytics_route():
         return jsonify(analytics), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# --- ADMIN ROUTES (Deduplicated) ---
 
 @order_bp.route('/admin/all', methods=['GET'])
 def admin_get_all_orders():

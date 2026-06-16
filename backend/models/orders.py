@@ -204,17 +204,10 @@ def get_admin_analytics_stats():
     
     # 1. Product Segment Success
     product_sales = {}
-    daily_revenue = {}
     
     for order in orders:
-        date_str = order.timestamp.strftime('%b %d')
-        if date_str not in daily_revenue:
-            daily_revenue[date_str] = 0
-            
         for item in order.items:
             rev = item.price_at_purchase * item.quantity
-            daily_revenue[date_str] += rev
-            
             if item.name not in product_sales:
                 product_sales[item.name] = {"revenue": 0, "qty": 0}
             product_sales[item.name]["revenue"] += rev
@@ -223,9 +216,24 @@ def get_admin_analytics_stats():
     # Sort segments by top 5 revenue generators
     top_segments = sorted([{"name": k, "revenue": v["revenue"], "qty": v["qty"]} for k, v in product_sales.items()], key=lambda x: x["revenue"], reverse=True)[:5]
     
-    # 2. Performance Forecasting (Simple Linear Projection based on last 7 days)
-    chart_data = [{"date": k, "revenue": v} for k, v in daily_revenue.items()][-14:] # Last 14 active days
+    # 2. Performance Forecasting (Continuous 14-day timeline)
+    chart_data = []
+    end_date = get_ist_now().date()
+    start_date = end_date - timedelta(days=13)
     
+    # Generate a blank 14-day slate
+    daily_revenue = { (start_date + timedelta(days=i)).strftime('%b %d'): 0.0 for i in range(14) }
+    
+    if orders:
+        for order in orders:
+            order_date = order.timestamp.date()
+            if start_date <= order_date <= end_date:
+                date_str = order_date.strftime('%b %d')
+                for item in order.items:
+                    daily_revenue[date_str] += (item.price_at_purchase * item.quantity)
+                    
+    chart_data = [{"date": k, "revenue": v} for k, v in daily_revenue.items()]
+
     # 3. Generate Audit/Activity Logs from real recent events
     from models.users import User
     recent_users = User.objects().order_by('-id')[:5]
@@ -243,5 +251,5 @@ def get_admin_analytics_stats():
     return {
         "top_segments": top_segments,
         "timeline": chart_data,
-        "audit_logs": audit_logs[:10] # Top 10 recent activities
+        "audit_logs": audit_logs[:10] 
     }

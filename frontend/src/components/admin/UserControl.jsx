@@ -8,8 +8,6 @@ function UserControl() {
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentAdminId, setCurrentAdminId] = useState(null);
-
-    // Modal State
     const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
@@ -34,13 +32,15 @@ function UserControl() {
 
     useEffect(() => {
         if (!isLoading && users.length > 0) {
-            animate('.user-row', {
-                translateY: [20, 0],
-                opacity: [0, 1],
-                delay: stagger(50),
-                duration: 600,
-                easing: 'easeOutExpo'
-            });
+            setTimeout(() => {
+                animate('.user-row', {
+                    translateY: [25, 0],
+                    opacity: [0, 1],
+                    delay: stagger(40),
+                    duration: 700,
+                    easing: 'easeOutExpo'
+                });
+            }, 50);
         }
     }, [isLoading, users]);
 
@@ -55,7 +55,7 @@ function UserControl() {
     };
 
     const handleDeleteUser = async (userId) => {
-        if (!window.confirm("WARNING: This will permanently delete the user. Continue?")) return;
+        if (!window.confirm("WARNING: Force destruction of this user parameter cannot be undone. Continue?")) return;
         const token = localStorage.getItem('token');
         try {
             await axios.delete(`/auth/admin/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -67,120 +67,129 @@ function UserControl() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto pb-12 relative">
+        <div className="max-w-7xl mx-auto relative">
             
-            {/* USER DETAILS MODAL */}
+            {/* DETAILED GLASSMORPHIC PROFILE MODAL */}
             {selectedUser && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-[slideUp_0.3s_ease-out]">
-                        <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                    <div className="bg-white border border-gray-200 backdrop-blur-2xl rounded-3xl p-8 max-w-md w-full shadow-2xl animate-[slideUp_0.3s_ease-out]">
+                        <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900">{selectedUser.fullname}</h3>
-                                <p className="text-sm font-bold text-slate-400">@{selectedUser.username}</p>
+                                <h3 className="text-2xl font-black text-gray-900 tracking-wide">{selectedUser.fullname}</h3>
+                                <p className="text-sm font-bold text-gray-500 mt-0.5">@{selectedUser.username}</p>
                             </div>
-                            <button onClick={() => setSelectedUser(null)} className="text-slate-400 hover:text-slate-700 bg-slate-50 p-2 rounded-full"><X size={24}/></button>
+                            <button onClick={() => setSelectedUser(null)} className="text-gray-400 hover:text-gray-900 bg-gray-50 border border-gray-200 p-2 rounded-full transition-colors">
+                                <X size={20}/>
+                            </button>
                         </div>
                         
                         <div className="space-y-4 mb-8">
                             <div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">System ID</span>
-                                <span className="text-xs font-mono bg-slate-50 border border-slate-200 px-2 py-1 rounded text-slate-600">{selectedUser.id}</span>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">System Node ID</span>
+                                <span className="text-xs font-mono bg-gray-50 border border-gray-200 px-2 py-1 rounded text-gray-700 block w-max">{selectedUser.id}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email Address</span>
-                                <span className="text-sm font-bold text-slate-700">{selectedUser.email}</span>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Communications Relay</span>
+                                <span className="text-sm font-bold text-gray-700">{selectedUser.email}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Current Role</span>
-                                <span className={`text-xs font-black uppercase tracking-wide px-3 py-1 rounded-md inline-block ${
-                                    selectedUser.role === 'admin' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                    selectedUser.role === 'seller' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                                    'bg-slate-100 text-slate-600 border border-slate-200'
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Privilege Map Level</span>
+                                <span className={`text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-md inline-block border ${
+                                    selectedUser.role === 'admin' ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                                    selectedUser.role === 'seller' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                                    'bg-gray-50 text-gray-600 border-gray-200'
                                 }`}>{selectedUser.role}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Account Created On</span>
-                                <span className="text-sm font-bold text-slate-700">{new Date(selectedUser.joined).toLocaleString()}</span>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Uplink Registered</span>
+                                <span className="text-sm font-bold text-gray-700">{new Date(selectedUser.joined).toLocaleString()}</span>
                             </div>
                         </div>
 
                         {selectedUser.id !== currentAdminId && (
                             <button 
                                 onClick={() => handleDeleteUser(selectedUser.id)}
-                                className="w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-600 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-100/50"
                             >
-                                <Trash size={18} /> Terminate Account
+                                <Trash size={16} /> Deconstruct Identity Node
                             </button>
                         )}
                     </div>
                 </div>
             )}
 
-            <div className="mb-8">
-                <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3"><People className="text-blue-600"/> Identity Access Management</h1>
-                <p className="text-slate-500 mt-1">Global registry of all platform accounts and security roles.</p>
+            <div className="mb-8 text-gray-900">
+                <h1 className="text-4xl font-black tracking-tight flex items-center gap-3"><People className="text-indigo-500"/> Identity Registry Control</h1>
+                <p className="text-gray-500 mt-2 font-medium text-lg">Platform account orchestration and security privilege mapping.</p>
             </div>
 
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* LIGHT THEME SYSTEM DATA GRID */}
+            <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-[2rem] shadow-xl overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-slate-900 text-white text-xs font-black uppercase tracking-widest">
-                            <th className="p-5 pl-8 rounded-tl-3xl">User Profile</th>
-                            <th className="p-5 hidden sm:table-cell">Email</th>
-                            <th className="p-5 text-center">Global Role</th>
-                            <th className="p-5 text-right pr-8 rounded-tr-3xl">Actions</th>
+                        <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs font-black uppercase tracking-widest">
+                            <th className="p-5 pl-8">Account Profile</th>
+                            <th className="p-5 hidden sm:table-cell">Relay Endpoint</th>
+                            <th className="p-5 text-center">Privilege Authorization</th>
+                            <th className="p-5 text-right pr-8">Orchestration</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map((user) => {
+                        {isLoading ? (
+                            <tr><td colSpan="4" className="p-10 text-center text-indigo-500 font-bold animate-pulse">Syncing nodes...</td></tr>
+                        ) : users.map((user) => {
                             const isSelf = user.id === currentAdminId;
                             return (
-                                <tr key={user.id} className={`user-row opacity-0 border-b border-slate-100 transition-colors ${isSelf ? 'bg-blue-50/30' : 'hover:bg-slate-50'}`}>
+                                <tr key={user.id} className={`user-row opacity-0 border-b border-gray-100 transition-all duration-300 ${isSelf ? 'bg-indigo-50/50' : 'hover:bg-gray-50'}`}>
                                     <td className="p-5 pl-8">
-                                        <div className="flex items-center gap-3">
-                                            {isSelf && <ShieldLockFill className="text-blue-500" title="This is you" />}
+                                        <div className="flex items-center gap-3.5">
+                                            {isSelf && <ShieldLockFill className="text-indigo-500" size={16} />}
                                             <div>
-                                                <p className="font-black text-slate-900 flex items-center gap-2">
-                                                    {user.fullname} {isSelf && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase tracking-widest">You</span>}
+                                                <p className="font-black text-gray-900 flex items-center gap-2">
+                                                    {user.fullname} 
+                                                    {isSelf && <span className="text-[9px] font-black bg-indigo-50 text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded uppercase tracking-widest">Active</span>}
                                                 </p>
-                                                <p className="text-xs font-bold text-slate-400">@{user.username}</p>
+                                                <p className="text-xs font-bold text-gray-500 mt-0.5">@{user.username}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-5 text-sm font-bold text-slate-600 hidden sm:table-cell">{user.email}</td>
+                                    <td className="p-5 text-sm font-bold text-gray-600 hidden sm:table-cell">{user.email}</td>
                                     <td className="p-5 text-center">
                                         <select 
                                             value={user.role} 
-                                            disabled={isSelf} // <-- PREVENTS ADMIN DEMOTING THEMSELVES
+                                            disabled={isSelf} 
                                             onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                                            className={`font-bold text-xs uppercase tracking-wide px-3 py-1.5 rounded-lg border-2 outline-none ${
-                                                isSelf ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:shadow-sm'
+                                            className={`font-black text-xs uppercase tracking-widest px-3 py-1.5 rounded-xl border outline-none bg-white text-center transition-all ${
+                                                isSelf ? 'cursor-not-allowed opacity-50 border-gray-200' : 'cursor-pointer hover:border-gray-300 border-gray-200'
                                             } ${
-                                                user.role === 'admin' ? 'bg-red-50 text-red-600 border-red-200' :
-                                                user.role === 'seller' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                                'bg-slate-100 text-slate-600 border-slate-200'
+                                                user.role === 'admin' ? 'text-rose-600' :
+                                                user.role === 'seller' ? 'text-blue-600' :
+                                                'text-gray-600'
                                             }`}
                                         >
-                                            <option value="customer">Customer</option>
-                                            <option value="seller">Seller</option>
-                                            <option value="admin">Admin</option>
+                                            <option value="customer" className="bg-white text-gray-900">Customer</option>
+                                            <option value="seller" className="bg-white text-gray-900">Seller</option>
+                                            <option value="admin" className="bg-white text-gray-900">Admin</option>
                                         </select>
                                     </td>
-                                    <td className="p-5 pr-8 text-right flex items-center justify-end gap-2">
+                                    <td className="p-5 pr-8 text-right flex items-center justify-end gap-3.5">
                                         <button 
                                             onClick={() => setSelectedUser(user)} 
-                                            className="text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 border border-slate-100 px-3 py-2 rounded-lg transition-all"
-                                            title="View Details"
+                                            className="text-gray-500 hover:text-indigo-500 bg-gray-50 hover:bg-indigo-50 border border-gray-200 px-3 py-2 rounded-xl transition-all"
+                                            title="Inspect Metadata"
                                         >
-                                            <Eye size={16} />
+                                            <Eye size={15} />
                                         </button>
                                         <button 
                                             onClick={() => handleDeleteUser(user.id)} 
                                             disabled={isSelf}
-                                            className={`px-3 py-2 rounded-lg transition-all ${isSelf ? 'text-slate-300 bg-slate-50 cursor-not-allowed' : 'text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100'}`}
-                                            title={isSelf ? "Cannot delete yourself" : "Delete User"}
+                                            className={`px-3 py-2 rounded-xl border transition-all ${
+                                                isSelf 
+                                                ? 'text-gray-300 bg-transparent border-transparent cursor-not-allowed' 
+                                                : 'text-rose-500 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 border-rose-200'
+                                            }`}
                                         >
-                                            <Trash size={16} />
+                                            <Trash size={15} />
                                         </button>
                                     </td>
                                 </tr>
@@ -189,7 +198,7 @@ function UserControl() {
                     </tbody>
                 </table>
             </div>
-            <style jsx="true">{`@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+            <style jsx="true">{`@keyframes slideUp { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
         </div>
     );
 }
