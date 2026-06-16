@@ -1,7 +1,7 @@
 from . import db
 from mongoengine import StringField, FloatField, DateTimeField, ReferenceField, EmbeddedDocument, EmbeddedDocumentField, ListField, IntField
 from datetime import datetime, timedelta, timezone
-from models.products import Product # Required to deduct stock
+from models.products import Product 
 
 IST = timezone(timedelta(hours=5, minutes=30))
 def get_ist_now():
@@ -38,7 +38,6 @@ def process_checkout(user_id, raw_items, payment_status, gateway_ref):
         product = Product.objects(pk=p_id).first()
         if not product: raise Exception(f"Product {p_id} no longer exists.")
             
-        # 1. Deduct Stock Here
         if product.stock_quantity >= qty:
             product.stock_quantity -= qty
             product.save()
@@ -80,12 +79,39 @@ def update_order_status(order_id, new_status):
     return False
 
 def get_seller_analytics_data(seller_id):
-    orders = Order.objects(items__seller_id=seller_id)
-    total_revenue, total_profit, total_items_sold = 0, 0, 0
-    monthly_sales = [0] * 12
-    current_year = get_ist_now().year
+    """Generates continuous date-wise data tracking Revenue, Expenses, Profit, and Margins."""
+    orders = Order.objects(items__seller_id=seller_id).order_by('timestamp') 
     
-    for order in orders:
+    total_revenue, total_cost, total_profit, total_items_sold = 0, 0, 0, 0
+    
+    valid_orders = [o for o in orders if any(item.seller_id == seller_id for item in o.items)]
+            
+    if not valid_orders:
+        return {
+            "total_revenue": 0, "total_expenses": 0, "total_profit": 0, 
+            "total_items_sold": 0, "overall_margin": 0, "chart_data": []
+        }
+
+    first_date = valid_orders[0].timestamp.date()
+    last_date = valid_orders[-1].timestamp.date()
+    
+    # Timeline generation (capped at 365 days for performance)
+    num_days = (last_date - first_date).days + 1
+    if num_days > 365:
+        first_date = last_date - timedelta(days=364)
+        num_days = 365
+        
+    # Generate continuous date dictionary with our 3 main pillars
+    date_range = [first_date + timedelta(days=x) for x in range(num_days)]
+    daily_metrics = {d.strftime('%b %d'): {"revenue": 0.0, "cost": 0.0, "profit": 0.0} for d in date_range}
+    
+    for order in valid_orders:
+        order_date = order.timestamp.date()
+        if order_date < first_date:
+            continue
+            
+        date_str = order_date.strftime('%b %d')
+        
         for item in order.items:
             if item.seller_id == seller_id:
                 revenue = item.price_at_purchase * item.quantity
@@ -93,15 +119,34 @@ def get_seller_analytics_data(seller_id):
                 profit = revenue - cost
                 
                 total_revenue += revenue
+                total_cost += cost
                 total_profit += profit
                 total_items_sold += item.quantity
                 
-                if order.timestamp.year == current_year:
-                    monthly_sales[order.timestamp.month - 1] += revenue
+                if date_str in daily_metrics:
+                    daily_metrics[date_str]["revenue"] += revenue
+                    daily_metrics[date_str]["cost"] += cost
+                    daily_metrics[date_str]["profit"] += profit
                     
+    # Format for JSON React frontend and calculate daily margins
+    chart_data = []
+    for date, metrics in daily_metrics.items():
+        margin = (metrics["profit"] / metrics["revenue"] * 100) if metrics["revenue"] > 0 else 0
+        chart_data.append({
+            "date": date,
+            "revenue": metrics["revenue"],
+            "expenses": metrics["cost"], # Mapped to variable expenses
+            "profit": metrics["profit"],
+            "margin": round(margin, 2)
+        })
+    
+    overall_margin = (total_profit / total_revenue * 100) if total_revenue > 0 else 0
+    
     return {
         "total_revenue": total_revenue,
+        "total_expenses": total_cost,
         "total_profit": total_profit,
         "total_items_sold": total_items_sold,
-        "monthly_sales": monthly_sales
+        "overall_margin": round(overall_margin, 2),
+        "chart_data": chart_data
     }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { animate, stagger } from 'animejs';
-import { Receipt, BoxSeam, Box, SendCheck } from 'react-bootstrap-icons';
+import { Receipt, BoxSeam, Box, SendCheck, PersonCircle, ChevronDown } from 'react-bootstrap-icons';
 
 function ManageOrders() {
     const [orders, setOrders] = useState([]);
@@ -36,19 +36,13 @@ function ManageOrders() {
         }
     }, [isLoading, orders]);
 
-    // --- STATUS UPDATE API CALL ---
     const handleStatusChange = async (orderId, newStatus) => {
         try {
             await axios.patch(`/order/update_status/${orderId}`, { status: newStatus });
-            
-            // Instantly update the UI
             setOrders(orders.map(o => {
-                if (o.id === orderId) {
-                    return { ...o, status: newStatus };
-                }
+                if (o.id === orderId) return { ...o, status: newStatus };
                 return o;
             }));
-            
         } catch (error) {
             console.error(error);
             alert("Failed to update status.");
@@ -80,12 +74,28 @@ function ManageOrders() {
                         year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     });
 
+                    // Dynamic styles for the premium dropdown
+                    const statusConfig = {
+                        'Paid': 'border-orange-200 text-orange-600 bg-orange-50 focus:ring-orange-500',
+                        'Shipped': 'border-blue-200 text-blue-600 bg-blue-50 focus:ring-blue-500',
+                        'Delivered': 'border-emerald-200 text-emerald-600 bg-emerald-50 focus:ring-emerald-500'
+                    };
+
                     return (
                         <div key={order.id} className="order-row opacity-0 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                             <div className="bg-slate-50 border-b border-slate-100 p-5 flex items-center justify-between">
-                                <div>
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Order Ref ID</span>
-                                    <span className="text-sm font-mono text-slate-700 bg-white px-2 py-1 rounded border border-slate-200">{order.id}</span>
+                                <div className="flex gap-8">
+                                    <div>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Order Ref ID</span>
+                                        <span className="text-sm font-mono text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm">{order.id}</span>
+                                    </div>
+                                    {/* NEW: Buyer Name Display */}
+                                    <div className="hidden sm:block">
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Customer</span>
+                                        <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                            <PersonCircle className="text-blue-500"/> {order.buyer_name}
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="text-right">
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Your Revenue</span>
@@ -94,33 +104,39 @@ function ManageOrders() {
                             </div>
                             
                             <div className="p-6">
-                                {/* DYNAMIC STATUS DROPDOWN */}
-                                <div className="mb-6 flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 w-max">
+                                {/* PREMIUM STYLED DROPDOWN */}
+                                <div className="mb-6 flex items-center gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 w-full sm:w-max shadow-sm">
                                     <div className="flex items-center gap-2">
-                                        <SendCheck className="text-blue-500" size={20}/>
-                                        <span className="font-bold text-slate-700">Shipping Status:</span>
+                                        <SendCheck className="text-slate-400" size={20}/>
+                                        <span className="text-sm font-black text-slate-600 uppercase tracking-wide">Update Status:</span>
                                     </div>
-                                    <select 
-                                        value={order.status} 
-                                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                        className={`font-bold outline-none cursor-pointer rounded-lg px-3 py-1 text-sm border-2 ${order.status === 'Paid' ? 'border-orange-300 text-orange-600 bg-orange-50' : order.status === 'Shipped' ? 'border-blue-300 text-blue-600 bg-blue-50' : 'border-emerald-300 text-emerald-600 bg-emerald-50'}`}
-                                    >
-                                        <option value="Paid">Packing (Paid)</option>
-                                        <option value="Shipped">Shipped</option>
-                                        <option value="Delivered">Delivered</option>
-                                    </select>
+                                    
+                                    <div className="relative">
+                                        <select 
+                                            value={order.status} 
+                                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                            className={`appearance-none font-bold outline-none cursor-pointer rounded-xl pl-4 pr-10 py-2 text-sm border-2 shadow-sm transition-all focus:ring-2 focus:ring-offset-1 ${statusConfig[order.status]}`}
+                                        >
+                                            <option value="Paid" className="bg-white text-slate-900">📦 Packing (Paid)</option>
+                                            <option value="Shipped" className="bg-white text-slate-900">🚚 Shipped</option>
+                                            <option value="Delivered" className="bg-white text-slate-900">✅ Delivered</option>
+                                        </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                            <ChevronDown size={14} className={order.status === 'Paid' ? 'text-orange-500' : order.status === 'Shipped' ? 'text-blue-500' : 'text-emerald-500'} />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-4">
                                     {order.items.map((item, idx) => (
                                         <div key={idx} className="flex items-center justify-between border-b border-slate-50 pb-4 last:border-0 last:pb-0">
                                             <div className="flex items-center gap-4">
-                                                <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
-                                                    <Box size={18} />
+                                                <div className="h-12 w-12 bg-white border border-slate-100 rounded-xl shadow-sm flex items-center justify-center text-blue-500">
+                                                    <Box size={20} />
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-900">{item.name}</p>
-                                                    <p className="text-xs font-bold text-slate-500">Ordered on: {orderDate}</p>
+                                                    <p className="text-xs font-bold text-slate-500 mt-0.5">Ordered on: {orderDate}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">

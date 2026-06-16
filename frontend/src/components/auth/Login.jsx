@@ -107,7 +107,7 @@ function Login() {
                 navigate('/store', { state: { loginToast: welcomeMsg } })
             }
             else if (decoded.role === "seller"){
-                navigate('/add_product', { state: { loginToast: welcomeMsg } })
+                navigate('/inventory', { state: { loginToast: welcomeMsg } })
             }
             else if (decoded.role === "admin"){
                 navigate('/admin/users', { state: { loginToast: welcomeMsg } })
