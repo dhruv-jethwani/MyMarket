@@ -9,6 +9,26 @@ import re
 
 from models.products import add_product, getallproducts, get_product_by_seller_id, get_product, delete_product, update_product, restock_product, get_seller_ledger
 
+
+def serialize_product(product):
+    if not product:
+        return None
+
+    return {
+        "id": str(product.id),
+        "_id": {"$oid": str(product.id)},
+        "name": product.name,
+        "description": product.description,
+        "seller": str(product.seller.id) if product.seller else None,
+        "cost_price": float(product.cost_price) if product.cost_price is not None else None,
+        "price": float(product.price) if product.price is not None else None,
+        "category": product.category,
+        "stock_quantity": int(product.stock_quantity) if product.stock_quantity is not None else None,
+        "image_url": product.image_url,
+        "specifications": [{"key": s.key, "value": s.value} for s in product.specifications] if product.specifications else [],
+        "created_at": product.created_at.isoformat() if getattr(product, 'created_at', None) else None
+    }
+
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
     api_key=os.getenv('CLOUDINARY_API_KEY'),
@@ -60,14 +80,15 @@ def product():
 
     elif request.method == 'GET':
         products = getallproducts()
-        return jsonify({"message": "Products retrieved successfully", "products": products}), 200
+        serialized = [serialize_product(p) for p in products]
+        return jsonify({"message": "Products retrieved successfully", "products": serialized}), 200
     
 @shop_bp.route('/product/<product_id>', methods=['GET', 'DELETE', 'PATCH'])
 def get__product(product_id):
     try:
         if request.method == 'GET':
             product = get_product(product_id)
-            if product: return jsonify({"message": "Product retrieved", "product": product}), 200
+            if product: return jsonify({"message": "Product retrieved", "product": serialize_product(product)}), 200
             return jsonify({"error": "Product not found"}), 404
             
         elif request.method == 'DELETE':
@@ -117,7 +138,8 @@ def seller_products():
     data = request.get_json()
     seller_id = data.get("seller_id")
     products = get_product_by_seller_id(sellerid=seller_id)
-    return jsonify({"message": "Products retrieved successfully", "products": products}), 200
+    serialized = [serialize_product(p) for p in products]
+    return jsonify({"message": "Products retrieved successfully", "products": serialized}), 200
 
 # --- NEW: ADD STOCK ROUTE ---
 @shop_bp.route('/product/<product_id>/restock', methods=['PATCH'])
