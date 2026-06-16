@@ -173,10 +173,11 @@ def get_admin_dashboard_stats():
     
     # Mock Enterprise Budgets (For UI Demonstration)
     target_budget = 500000 
-    budget_variance = total_revenue - target_budget
+    no_data_yet = total_revenue == 0 and total_cost == 0
+    budget_variance = 0 if no_data_yet else total_revenue - target_budget
 
     # EVM Metrics (Earned Value Management)
-    planned_value = target_budget * 0.8 # 80% expected completion
+    planned_value = 0 if no_data_yet else target_budget * 0.8 # 80% expected completion
     earned_value = total_revenue
     actual_cost = total_cost
     cpi = (earned_value / actual_cost) if actual_cost > 0 else 1 # Cost Performance Index
