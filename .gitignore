@@ -1,5 +1,6 @@
 frontend/node_modules
 backend/.env
+frontend/.env
 **/__pycache__/
 mobile/.expo
 mobile/node_modules

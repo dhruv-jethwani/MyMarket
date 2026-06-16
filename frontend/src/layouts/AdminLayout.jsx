@@ -153,7 +153,7 @@ export default function AdminLayout() {
                         MyMarket
                     </Link>
                     <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 border border-red-500/20 rounded-md">
-                        Root
+                        Admin
                     </span>
                 </div>
 
@@ -183,7 +183,7 @@ export default function AdminLayout() {
                         className="flex items-center gap-3 w-full px-4 py-3 text-slate-600 font-bold tracking-wide hover:bg-red-500/10 hover:text-red-400 rounded-xl border border-transparent hover:border-red-500/20 transition-all duration-300"
                     >
                         <BoxArrowRight size={20} />
-                        Terminate Session
+                        Logout
                     </button>
                 </div>
             </aside>
@@ -193,16 +193,16 @@ export default function AdminLayout() {
                 <header className="h-16 bg-gradient-to-br from-slate-50 via-white to-blue-50/20 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 shadow-sm">
                     <div className="flex items-center gap-2.5 text-slate-600 font-semibold text-sm tracking-wide">
                         <Speedometer2 className="text-blue-500" size={16} />
-                        <span>SYSTEM INFRASTRUCTURE ROOT</span>
+                        <span>ADMINISTRATION</span>
                     </div>
                     
-                    <div className="flex items-center gap-3.5 bg-white/5 border border-slate-100 px-4 py-1.5 rounded-2xl">
-                        <div className="text-right hidden sm:block">
-                            <p className="text-xs font-black text-slate-900">{adminName}</p>
-                            <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Sys_Admin</p>
-                        </div>
-                        <PersonCircle size={28} className="text-slate-500" />
-                    </div>
+                    <Link to="/profile" className="flex items-center gap-3 hover:bg-slate-50 p-2 rounded-xl transition-colors cursor-pointer">
+						<div className="text-right hidden sm:block">
+							<p className="text-xs font-black text-slate-900">{adminName}</p>
+                            <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">ACTIVE SESSION</p>
+						</div>
+						<PersonCircle size={36} className="text-slate-300" />
+					</Link>
                 </header>
 
                 <main className="flex-1 overflow-y-auto p-8">
