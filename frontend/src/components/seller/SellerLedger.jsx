@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { animate, stagger } from 'animejs';
 import { JournalCheck, BoxSeam } from 'react-bootstrap-icons';
 
@@ -11,7 +11,7 @@ function SellerLedger() {
         const fetchLedger = async () => {
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get('/shop/seller/ledger', {
+                const res = await API.get('/shop/seller/ledger', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setLogs(res.data.ledger || []);

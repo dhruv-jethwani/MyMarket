@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { animate, stagger } from 'animejs';
 import { BarChartLine, PieChartFill, Activity, BoxSeam } from 'react-bootstrap-icons';
 import { Renderer, Camera, Transform, Program, Mesh, Plane } from 'ogl';
@@ -17,7 +17,7 @@ function AdminAnalytics() {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const res = await axios.get('/order/admin/analytics', { headers: { Authorization: `Bearer ${token}` } });
+                const res = await API.get('/order/admin/analytics', { headers: { Authorization: `Bearer ${token}` } });
                 setData(res.data);
             } catch (err) {
                 console.error("Failed to load admin analytics");

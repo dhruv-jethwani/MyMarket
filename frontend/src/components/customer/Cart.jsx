@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { jwtDecode } from 'jwt-decode';
 import { Link, useNavigate } from 'react-router-dom';
 import { animate, stagger } from 'animejs';
@@ -25,7 +25,7 @@ function Cart() {
                 return;
             }
             try {
-                const res = await axios.get(CART_API, {
+                const res = await API.get(CART_API, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data && res.data.cart) {
@@ -62,7 +62,7 @@ function Cart() {
     const handleRemoveItem = async (productId) => {
         setIsRemoving(productId);
         try {
-            await axios.delete(DELETE_API, {
+            await API.delete(DELETE_API, {
                 data: {
                     user_id: userid,
                     product_id: productId

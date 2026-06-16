@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -101,7 +101,7 @@ function AddProduct() {
         formData.append('specifications', JSON.stringify(specsObj));
         
         try {
-            await axios.post(API, formData, {
+            await API.post(API, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             // Replaced alert with custom toast

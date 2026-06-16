@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { animate, stagger } from 'animejs';
 import { Receipt, BoxSeam, Box, SendCheck, PersonCircle, ChevronDown } from 'react-bootstrap-icons';
 
@@ -11,7 +11,7 @@ function ManageOrders() {
         const fetchSellerOrders = async () => {
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get('/order/seller_orders', {
+                const res = await API.get('/order/seller_orders', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setOrders(res.data.orders || []);
@@ -38,7 +38,7 @@ function ManageOrders() {
 
     const handleStatusChange = async (orderId, newStatus) => {
         try {
-            await axios.patch(`/order/update_status/${orderId}`, { status: newStatus });
+            await API.patch(`/order/update_status/${orderId}`, { status: newStatus });
             setOrders(orders.map(o => {
                 if (o.id === orderId) return { ...o, status: newStatus };
                 return o;

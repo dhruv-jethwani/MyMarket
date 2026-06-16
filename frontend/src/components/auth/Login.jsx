@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import axios from 'axios'
+import API from '../../api'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeSlash, Check2Circle, XCircle } from 'react-bootstrap-icons'
 import { Link, useNavigate } from 'react-router-dom'
@@ -92,7 +92,7 @@ function Login() {
 
     async function onSubmit(data) {
         try {
-            const res = await axios.post(API, data)
+            const res = await API.post(API, data)
             const token = res.data.token; 
             const decoded = jwtDecode(token)
             localStorage.setItem('token', token)

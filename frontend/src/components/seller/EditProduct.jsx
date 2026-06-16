@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -43,7 +43,7 @@ function EditProduct({ productId, onCancel, onSuccess }) {
         async function fetchProduct() {
             try {
                 // Fetch using the prop passed down from ManageInventory
-                const res = await axios.get(`/shop/product/${productId}`);
+                const res = await API.get(`/shop/product/${productId}`);
                 const product = res.data.product;
                 
                 const formattedSpecs = product.specifications ? product.specifications.map(s => ({
@@ -116,7 +116,7 @@ function EditProduct({ productId, onCancel, onSuccess }) {
         formData.append('specifications', JSON.stringify(specsObj));
         
         try {
-            await axios.patch(`/shop/product/${productId}`, formData, {
+            await API.patch(`/shop/product/${productId}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             // Call the success prop to tell the parent (ManageInventory) to refresh the grid

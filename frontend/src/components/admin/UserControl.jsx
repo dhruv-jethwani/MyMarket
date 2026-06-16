@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { jwtDecode } from 'jwt-decode';
 import { animate, stagger } from 'animejs';
 import { People, Trash, Eye, X, ShieldLockFill } from 'react-bootstrap-icons';
@@ -22,7 +22,7 @@ function UserControl() {
     const fetchUsers = async () => {
         const token = localStorage.getItem('token');
         try {
-            const res = await axios.get('/auth/admin/users', { headers: { Authorization: `Bearer ${token}` } });
+            const res = await API.get('/auth/admin/users', { headers: { Authorization: `Bearer ${token}` } });
             setUsers(res.data.users);
             setIsLoading(false);
         } catch (error) {
@@ -47,7 +47,7 @@ function UserControl() {
     const handleRoleChange = async (userId, newRole) => {
         const token = localStorage.getItem('token');
         try {
-            await axios.patch(`/auth/admin/users/${userId}`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
+            await API.patch(`/auth/admin/users/${userId}`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
             setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
         } catch (error) {
             alert(error.response?.data?.error || "Failed to update role");
@@ -58,7 +58,7 @@ function UserControl() {
         if (!window.confirm("WARNING: Force destruction of this user parameter cannot be undone. Continue?")) return;
         const token = localStorage.getItem('token');
         try {
-            await axios.delete(`/auth/admin/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+            await API.delete(`/auth/admin/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
             setUsers(users.filter(u => u.id !== userId));
             if (selectedUser && selectedUser.id === userId) setSelectedUser(null);
         } catch (error) {

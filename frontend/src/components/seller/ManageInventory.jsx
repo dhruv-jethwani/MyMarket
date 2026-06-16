@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { jwtDecode } from 'jwt-decode';
 import { PencilSquare, Trash, TagFill, BoxSeam, PlusCircle, Check2Circle, X } from 'react-bootstrap-icons';
 import { animate, stagger } from 'animejs';
@@ -31,7 +31,7 @@ function ManageInventory() {
     async function get_products(uId) {
         setIsLoading(true);
         try {
-            const res = await axios.post(API, { seller_id: uId });
+            const res = await API.post(API, { seller_id: uId });
             if (res.data && res.data.products) setProducts(res.data.products);
         } catch (error) {
             console.error("Failed to fetch products:", error);
@@ -43,7 +43,7 @@ function ManageInventory() {
     const handleDelete = async (productId) => {
         if (!window.confirm("Are you sure you want to permanently delete this product?")) return;
         try {
-            await axios.delete(`/shop/product/${productId}`);
+            await API.delete(`/shop/product/${productId}`);
             setProducts(products.filter(p => (p._id.$oid || p._id) !== productId));
         } catch (error) {
             alert("Could not delete product.");
@@ -56,7 +56,7 @@ function ManageInventory() {
         setIsRestocking(true);
         try {
             const pid = restockProduct._id.$oid || restockProduct._id;
-            await axios.patch(`/shop/product/${pid}/restock`, { quantity: parseInt(restockQty) });
+            await API.patch(`/shop/product/${pid}/restock`, { quantity: parseInt(restockQty) });
             
             setProducts(products.map(p => {
                 if ((p._id.$oid || p._id) === pid) {

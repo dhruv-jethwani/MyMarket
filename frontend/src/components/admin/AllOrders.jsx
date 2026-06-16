@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { animate, stagger } from 'animejs';
 import { CardList, CheckCircleFill, ClockFill, Truck, Check2All } from 'react-bootstrap-icons';
 
@@ -11,7 +11,7 @@ function AllOrders() {
         const fetchOrders = async () => {
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get('/order/admin/all', { headers: { Authorization: `Bearer ${token}` } });
+                const res = await API.get('/order/admin/all', { headers: { Authorization: `Bearer ${token}` } });
                 setOrders(res.data.orders);
                 setIsLoading(false);
             } catch (error) {
@@ -35,7 +35,7 @@ function AllOrders() {
 
     const handleStatusChange = async (orderId, newStatus) => {
         try {
-            await axios.patch(`/order/update_status/${orderId}`, { status: newStatus });
+            await API.patch(`/order/update_status/${orderId}`, { status: newStatus });
             setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
         } catch (error) {
             alert("Failed to force update status.");

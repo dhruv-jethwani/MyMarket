@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { animate, stagger } from 'animejs';
 import { Receipt, BoxSeam, CheckCircleFill, ClockFill, Truck, Check2All, Download } from 'react-bootstrap-icons';
@@ -19,7 +19,7 @@ function OrderHistory() {
                 return;
             }
             try {
-                const res = await axios.get(HISTORY_API, {
+                const res = await API.get(HISTORY_API, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data && res.data.orders) {

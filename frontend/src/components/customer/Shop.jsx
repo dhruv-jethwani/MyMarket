@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { Link, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { animate, stagger } from 'animejs';
@@ -29,14 +29,14 @@ function Shop() {
         const loadStoreData = async () => {
             setIsLoading(true);
             try {
-                const prodRes = await axios.get(API_PRODUCTS);
+                const prodRes = await API.get(API_PRODUCTS);
                 if (prodRes.data && prodRes.data.products) {
                     setProducts(prodRes.data.products);
                 }
 
                 const currentToken = localStorage.getItem('token');
                 if (currentToken) {
-                    const cartRes = await axios.get(CART_API, {
+                    const cartRes = await API.get(CART_API, {
                         headers: { Authorization: `Bearer ${currentToken}` }
                     });
                     
@@ -136,7 +136,7 @@ function Shop() {
                 user: userId,
                 items: localCart
             };
-            await axios.post(API_CART, payload);
+            await API.post(API_CART, payload);
             showToast("Cart updated successfully!", "success");
             setDbCartState({...localCart});
         } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { animate, stagger } from 'animejs';
 import { GraphUp, CurrencyDollar, BoxSeam, Receipt, Percent } from 'react-bootstrap-icons';
 
@@ -16,7 +16,7 @@ function SellerAnalytics() {
         const fetchAnalytics = async () => {
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get('/order/seller_analytics', {
+                const res = await API.get('/order/seller_analytics', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setStats(res.data);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
-import axios from 'axios'
+import API from '../../api';
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Eye, EyeSlash, Check2Circle, XCircle } from 'react-bootstrap-icons'
@@ -114,7 +114,7 @@ function Register() {
 
     async function onSubmit(data) {
         try {
-            const res = await axios.post(API, data)
+            const res = await API.post(API, data)
             console.log(res)
             
             // Replaced alert with toast + delayed redirect

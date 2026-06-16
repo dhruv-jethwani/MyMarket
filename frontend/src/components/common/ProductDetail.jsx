@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from '../../api';
 import { animate, stagger } from 'animejs';
 import { ArrowLeft, TagFill, BoxSeam, ShieldCheck } from 'react-bootstrap-icons';
 import { Renderer, Camera, Transform, Program, Mesh, Plane } from 'ogl';
@@ -19,7 +19,7 @@ function ProductDetail() {
             try {
                 // Determine if we are in seller or store route based on URL to use correct endpoints if needed
                 // Currently defaults to /shop/product/ API
-                const res = await axios.get(`/shop/product/${id}`);
+                const res = await API.get(`/shop/product/${id}`);
                 setProduct(res.data.product);
             } catch (error) {
                 console.error("Failed to load product:", error);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { animate, stagger } from 'animejs';
 import { Speedometer2, CurrencyDollar, Receipt, GraphUp, BarChartLine, Layers } from 'react-bootstrap-icons';
 import { Renderer, Camera, Transform, Program, Mesh, Plane } from 'ogl';
@@ -12,7 +12,7 @@ function AdminDashboard() {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const res = await axios.get('/order/admin/dashboard', {
+                const res = await API.get('/order/admin/dashboard', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setStats(res.data);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { jwtDecode } from 'jwt-decode';
 import { animate, stagger } from 'animejs';
 import { 
@@ -53,7 +53,7 @@ function Profile() {
                 }));
 
                 // Fetching comprehensive database record securely
-                const res = await axios.get(`${PROFILE_API}/${decoded.user_id}`, {
+                const res = await API.get(`${PROFILE_API}/${decoded.user_id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -131,7 +131,7 @@ function Profile() {
 
         try {
             const decoded = jwtDecode(token);
-            const res = await axios.put(`${UPDATE_API}/${decoded.user_id}`, formData, {
+            const res = await API.put(`${UPDATE_API}/${decoded.user_id}`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res){

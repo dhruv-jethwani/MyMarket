@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import API from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { animate } from 'animejs';
@@ -30,7 +30,7 @@ function Checkout() {
             const token = localStorage.getItem('token');
             if (!token) { navigate('/login'); return; }
             try {
-                const res = await axios.get(GET_CART_API, {
+                const res = await API.get(GET_CART_API, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data && res.data.cart) setCart(res.data.cart);
@@ -110,7 +110,7 @@ function Checkout() {
                     gateway_ref: "MOCK_GW_" + Math.random().toString(36).substring(2, 9).toUpperCase()
                 };
 
-                await axios.post(PLACE_ORDER_API, payload);
+                await API.post(PLACE_ORDER_API, payload);
                 
                 // MOCK GATEWAY RULE 2: SPECIFIC SUCCESS
                 if (rawCardNumber.startsWith('2000')) {
