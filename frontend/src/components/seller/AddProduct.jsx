@@ -49,6 +49,8 @@ function AddProduct() {
         name: "specifications"
     });
 
+    const addProductPath = '/shop/product'
+
     // --- NEW TOAST FUNCTION ---
     const showToast = (message, type = 'success') => {
         setToast({ visible: true, message, type });
@@ -82,7 +84,7 @@ function AddProduct() {
         });
     }, []);
 
-    const API = '/shop/product';
+    const addProductPath = '/shop/product';
 
     async function onSubmit(data) {
         const formData = new FormData();
@@ -101,7 +103,7 @@ function AddProduct() {
         formData.append('specifications', JSON.stringify(specsObj));
         
         try {
-            await API.post(API, formData, {
+            await API.post(addProductPath, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             // Replaced alert with custom toast

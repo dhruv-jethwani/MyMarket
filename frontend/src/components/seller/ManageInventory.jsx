@@ -7,7 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import EditProduct from './EditProduct';
 
 function ManageInventory() {
-    const API = '/shop/seller';
+    const manageSellerPath = '/shop/seller';
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState(null);
@@ -31,7 +31,7 @@ function ManageInventory() {
     async function get_products(uId) {
         setIsLoading(true);
         try {
-            const res = await API.post(API, { seller_id: uId });
+            const res = await API.post(manageSellerPath, { seller_id: uId });
             if (res.data && res.data.products) setProducts(res.data.products);
         } catch (error) {
             console.error("Failed to fetch products:", error);

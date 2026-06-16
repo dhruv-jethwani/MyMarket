@@ -52,7 +52,7 @@ function Register() {
     const strength = calculateStrength();
     const strengthColor = strength < 66 ? 'bg-orange-500' : strength < 100 ? 'bg-yellow-500' : 'bg-green-500';
 
-    const API = '/auth/register'
+    const registerPath = '/auth/register'
 
     // --- HIGH-END ANIMATION SEQUENCE ---
     useEffect(() => {
@@ -114,7 +114,7 @@ function Register() {
 
     async function onSubmit(data) {
         try {
-            const res = await API.post(API, data)
+            const res = await API.post(registerPath, data)
             console.log(res)
             
             // Replaced alert with toast + delayed redirect

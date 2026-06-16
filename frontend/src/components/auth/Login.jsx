@@ -15,7 +15,7 @@ const loginSchema = z.object({
 
 function Login() {
     const navigate = useNavigate()
-    const API = '/auth/login'
+    const loginPath = '/auth/login'
     const [showPassword, setShowPassword] = useState(false)
     const cardRef = useRef(null);
     const buttonRef = useRef(null);
@@ -92,7 +92,7 @@ function Login() {
 
     async function onSubmit(data) {
         try {
-            const res = await API.post(API, data)
+            const res = await API.post(loginPath, data)
             const token = res.data.token; 
             const decoded = jwtDecode(token)
             localStorage.setItem('token', token)
