@@ -1,113 +1,224 @@
-# 🛒 My Market - SBU E-Commerce Application
+# 🛒 My Market
 
-**My Market** is a professional, small-scale Strategic Business Unit (SBU) e-commerce application. Built with a modern integrated stack, it features a robust role-based access system for Customers, Staff, and Administrators to manage products, orders, and users seamlessly.
-
----
-
-## 🚀 Tech Stack
-
-* **Frontend:** React (JSX)
-* **Backend:** Python (Flask)
-* **Database:** MongoDB (Flexible Document Schema)
-* **Authentication:** JWT (JSON Web Tokens)
-* **Styling:** CSS3 / Tailwind / animejs(For Animations)
+**My Market** is a full-stack multi-platform e-commerce application developed for the SBU semester project. It includes a Flask backend, a React web frontend, and an Expo React Native mobile client.
 
 ---
 
-## 👥 User Roles & Permissions
+## 🚀 What’s Included
 
-| Role | Access Level | Responsibilities |
-| :--- | :--- | :--- |
-| **Customer** | Storefront | Browse products, manage cart, checkout, and view personal order history. |
-| **Staff/Manager** | Operations | Manage inventory (CRUD), update stock levels, and fulfill customer orders. |
-| **Admin** | Full System | All Staff permissions + user management (assigning roles) and site analytics. |
+- **Backend:** Flask + MongoDB via `mongoengine`
+- **Frontend:** React + Vite + client-side role-based routing
+- **Mobile:** Expo React Native app with tab navigation
+- **Authentication:** JWT-based login and profile management
+- **Image upload:** Cloudinary-backed product image storage
+- **Deployment-ready:** Vercel configs for backend and frontend
 
 ---
 
-## 📁 Project Structure (Components)
+## 🧭 Architecture Overview
 
-The project follows a hybrid architecture: **Common** components remain in the root directory, while **Specific** components are nested within role-based folders for maximum security and organization.
+### Root folders
 
-```text
-src/
- ┣ components/
- ┃ ┣ admin/
- ┃ ┃ ┣ AllOrders.jsx
- ┃ ┃ ┣ UserControl.jsx
- ┃ ┃ ┗ ManageProducts.jsx     
- ┃ ┣ auth/
- ┃ ┃ ┣ Login.jsx
- ┃ ┃ ┣ Register.jsx
- ┃ ┃ ┗ ProtectedRoute.jsx     <-- NEW: Your Security Gatekeeper
- ┃ ┣ common/
- ┃ ┃ ┣ Home.jsx
- ┃ ┃ ┣ ProductDetail.jsx
- ┃ ┃ ┣ Profile.jsx
- ┃ ┃ ┗ ProductCard.jsx        
- ┃ ┣ customer/
- ┃ ┃ ┣ Shop.jsx               
- ┃ ┃ ┣ Cart.jsx
- ┃ ┃ ┣ Checkout.jsx
- ┃ ┃ ┗ OrderHistory.jsx
- ┃ ┗ seller/
- ┃   ┣ AddProduct.jsx
- ┃   ┣ ManageInventory.jsx
- ┃   ┗ ManageOrders.jsx
- ┣ layouts/                   <-- NEW FOLDER: UI Wrappers
- ┃ ┣ AdminLayout.jsx          (Contains Admin Navbar & Sidebar)
- ┃ ┣ CustomerLayout.jsx       (Contains Customer Navbar & Cart Icon)
- ┃ ┗ SellerLayout.jsx         (Contains Seller Navbar & Stats)
- ┣ App.css
- ┣ App.jsx                    <-- Where your routes and layouts combine
- ┣ index.css
- ┗ main.jsx
+- `backend/` — Flask API, MongoDB models, authentication, cart, orders, product management
+- `frontend/` — React web application with protected pages for customers, sellers, and admins
+- `mobile/` — Expo mobile app with bottom tabs and seller/customer flows
+
+---
+
+## 👥 Supported Roles
+
+- **Customer** — browse products, manage cart, checkout, view order history, update profile
+- **Seller** — add/edit/delete products, manage inventory, view seller orders, analytics, ledger
+- **Admin** — manage users, view all orders, access admin dashboard/analytics
+
+---
+
+## 🧩 Backend Details
+
+### Main backend entry
+- `backend/main.py`
+- Registers blueprints for `auth`, `shop`, `cart`, and `order`
+- Connects to MongoDB using `MONGO_URI`
+- Enables CORS for cross-origin access
+
+### Backend routes
+
+- `POST /auth/register` — register new users
+- `POST /auth/login` — login and receive JWT
+- `GET /auth/profile/<user_id>` — fetch user profile
+- `PUT /auth/update_profile/<user_id>` — update user profile
+- `GET /auth/admin/users` — list users (admin)
+- `PATCH /auth/admin/users/<target_id>` — change role (admin)
+- `DELETE /auth/admin/users/<target_id>` — delete user (admin)
+
+- `GET /shop/product` — fetch all products
+- `POST /shop/product` — add product with Cloudinary image upload
+- `GET /shop/product/<product_id>` — get single product
+- `PATCH /shop/product/<product_id>` — update product
+- `DELETE /shop/product/<product_id>` — delete product and image
+- `POST /shop/seller` — fetch products by seller
+- `PATCH /shop/product/<product_id>/restock` — restock product
+- `GET /shop/seller/ledger` — seller ledger history
+
+- `POST /cart/add_cart` — add/update cart items
+- `POST /cart/clear_cart` — clear cart
+- `GET /cart/get_cart` — get cart for authenticated user
+- `DELETE /cart/delete_item` — remove a cart item
+
+- `POST /order/place_order` — place an order and clear cart
+- `GET /order/history` — fetch authenticated user order history
+- `GET /order/seller_orders` — get seller-specific orders
+- `PATCH /order/update_status/<order_id>` — update order status
+- `GET /order/seller_analytics` — seller metrics
+- `GET /order/admin/all` — admin all orders
+- `GET /order/admin/dashboard` — admin dashboard stats
+- `GET /order/admin/analytics` — admin analytics
+
+---
+
+## 🗄️ Backend Models
+
+- `User` — fullname, username, email, password, role, address
+- `Product` — name, description, seller, cost_price, price, category, stock_quantity, image_url, specifications
+- `InventoryLog` — seller ledger for restocks and expense tracking
+- `Cart` — one cart per user with embedded `CartItem`
+- `Order` — order items, total amount, status, gateway reference, timestamp
+
+---
+
+## 🌐 Frontend Details
+
+### Main frontend entry
+- `frontend/src/App.jsx`
+- Uses `react-router-dom` for routes and role-based protected routes
+- Includes layouts: `CustomerLayout`, `SellerLayout`, `AdminLayout`
+
+### Key pages
+
+- Public: `Home`, `Login`, `Register`, `Profile`
+- Customer: `Shop`, `Cart`, `Checkout`, `OrderHistory`, `ProductDetail`
+- Seller: `AddProduct`, `ManageInventory`, `ManageOrders`, `SellerAnalytics`, `SellerLedger`
+- Admin: `AdminDashboard`, `AllOrders`, `UserControl`, `AdminAnalytics`
+
+### Frontend API helper
+- `frontend/src/api.js` — Axios instance with optional `VITE_API_URL`
+
+---
+
+## 📱 Mobile Details
+
+### Main mobile entry
+- `mobile/App.js`
+- Expo app with authentication bootstrap and role-based redirection
+- Customer tabs: `Store`, `Cart`, `Checkout`, `History`, `Profile`
+- Seller tabs: `Inventory`, `Add`, `Orders`, `Analytics`, `Profile`
+- Uses `AsyncStorage`, JWT decoding, and `react-navigation`
+
+### Expo config
+- `mobile/app.json`
+- `mobile/package.json`
+
+---
+
+## 🛠️ Setup & Run
+
+### 1. Backend
+
+```powershell
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
 ```
----
 
-## 🛠️ Key Features
+Create a `.env` file in `backend/` with:
 
-### **1. Flexible Product Management**
-Utilizing **MongoDB**, "My Market" supports diverse product categories with varying attributes (sizes, colors, technical specs) without the constraints of a rigid relational table.
+```env
+MONGO_URI=<your-mongodb-uri>
+SECRET_KEY=<your-secret-key>
+CLOUDINARY_CLOUD_NAME=<cloudinary-cloud-name>
+CLOUDINARY_API_KEY=<cloudinary-api-key>
+CLOUDINARY_API_SECRET=<cloudinary-api-secret>
+```
 
-### **2. Role-Based Protected Routing**
-The React frontend uses conditional rendering and higher-order components to ensure users only see the interface relevant to their role. The Flask backend enforces this by using JWT-based decorators to protect sensitive API endpoints.
+Then run:
 
-### **3. Live Order Fulfillment**
-* **Customers:** Track real-time progress of purchases (Pending → Shipped → Delivered).
-* **Staff/Managers:** A dedicated workspace to manage global inventory and process incoming orders efficiently.
+```powershell
+python main.py
+```
 
-### **4. Secure Authentication & Data Integrity**
-* **Encryption:** Passwords are never stored in plain text; they are hashed using `Bcrypt`.
-* **Price Snapshots:** Orders capture the product price at the exact moment of purchase, protecting the record from future price fluctuations.
+### 2. Frontend
 
----
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
-## 🗄️ Database Schema Design (MongoDB)
+- Use `VITE_API_URL` in `frontend/.env` when pointing to a deployed backend
+- Leave blank for local proxy during development
 
-* **Users:** `_id, fullname, username, email, password, role, address, created_at`
-* **Products:** `_id, name, description, seller, price, category, stock_quantity, image_url, specifications (flexible object)`
-* **Carts:** `_id, user_id, items: [{product_id, quantity}], updated_at`
-* **Orders:** `_id, user_id, items: [{name, price_at_purchase, quantity}], total_amount, status, timestamp`
+### 3. Mobile
 
----
+```powershell
+cd mobile
+npm install
+npm start
+```
 
-## ⚙️ Installation & Setup
-
-### **Backend (Flask)**
-1. Navigate to the backend directory: `cd backend`
-2. Create a virtual environment: `python -m venv venv`
-3. Activate environment:
-    * Windows: `venv\Scripts\activate`
-    * Mac/Linux: `source venv/bin/activate`
-4. Install dependencies: `pip install -r requirements.txt`
-5. Run the server: `python app.py`
-
-### **Frontend (React)**
-1. Navigate to the frontend directory: `cd frontend`
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
+- Then open the Expo project in the Expo Go app or emulator
 
 ---
 
-## 📄 License
-This project is developed for the SBU E-Commerce "My Market" requirement. Internal Use Only.
+## 📦 Dependencies
+
+### Backend
+- Flask
+- Flask-Cors
+- mongoengine
+- pymongo
+- PyJWT
+- python-dotenv
+- cloudinary
+
+### Frontend
+- react
+- react-dom
+- react-router-dom
+- axios
+- zod
+- animejs
+- react-hook-form
+- bootstrap
+- tailwindcss
+
+### Mobile
+- expo
+- react-native
+- axios
+- jwt-decode
+- react-hook-form
+- react-navigation
+- @react-native-async-storage/async-storage
+- twrnc
+
+---
+
+## 🚀 Deployment Notes
+
+- `backend/vercel.json` is configured for a serverless Flask deployment
+- `frontend/vercel.json` rewrites all routes to `index.html`
+- The mobile app is built with Expo and can be published with Expo or EAS
+
+---
+
+## 📌 Notes
+
+- The backend is designed to work in serverless environments with a delayed MongoDB connection
+- Product images upload to Cloudinary and are removed when products are deleted or replaced
+- Order processing deducts stock and saves price snapshots for each item
+
+---
+
+## 📝 License
+This repository is built for academic/project use and is not intended for commercial release.
