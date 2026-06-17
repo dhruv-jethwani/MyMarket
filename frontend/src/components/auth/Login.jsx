@@ -17,6 +17,7 @@ function Login() {
     const navigate = useNavigate()
     const loginPath = '/auth/login'
     const [showPassword, setShowPassword] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const cardRef = useRef(null);
     const buttonRef = useRef(null);
     
@@ -91,6 +92,7 @@ function Login() {
     };
 
     async function onSubmit(data) {
+        setIsLoading(true);
         try {
             const res = await API.post(loginPath, data)
             const token = res.data.token; 
@@ -118,6 +120,7 @@ function Login() {
         } catch (error) {
             console.log(error)
             showToast(error.response?.data?.error || "Invalid credentials", "error");
+            setIsLoading(false);
         }
     }
 
@@ -187,13 +190,25 @@ function Login() {
                     <div className="pt-8 form-anim opacity-0 origin-bottom">
                         <button 
                             ref={buttonRef}
-                            onMouseEnter={handleBtnHover}
-                            onMouseLeave={handleBtnLeave}
+                            onMouseEnter={!isLoading ? handleBtnHover : undefined}
+                            onMouseLeave={!isLoading ? handleBtnLeave : undefined}
                             type="submit" 
-                            className="w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700"
-                            style={{ boxShadow: '0px 10px 15px -3px rgba(37, 99, 235, 0.2)' }}
+                            disabled={isLoading}
+                            className={`w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all ${isLoading ? 'bg-blue-500 cursor-not-allowed opacity-90' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            style={{ boxShadow: isLoading ? '0px 10px 15px -3px rgba(37, 99, 235, 0.1)' : '0px 10px 15px -3px rgba(37, 99, 235, 0.2)' }}
                         >
-                            Sign In
+                            {isLoading ? (
+                                <>
+                                    <div className="flex gap-1">
+                                        <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    </div>
+                                    Signing in...
+                                </>
+                            ) : (
+                                'Sign In'
+                            )}
                         </button>
                     </div>
 
